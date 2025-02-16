@@ -1,0 +1,110 @@
+
+
+ HERE TO EXE-HEADER
+ 
+ $0000000000005A4D ,
+ 0 , 0 , 0 , 0 , 0 , 0 ,
+ $4000000000 ,
+
+   1 TO YDP_FL
+
+\ https://github.com/abhisek/reverse-engineering-and-malware-analysis/blob/master/gitbook/chapters/pe/pe_file_format.md
+\ https://github.com/ayaka14732/TinyPE-on-Win10
+ 'P' C, 'E' C, 0 W,
+ $8664		W,	\ Machine
+ 1		W,	\ NumberOfSections
+ 0		L,	\ [UNUSED] TimeDateStamp
+ 0		L,	\ PointerToSymbolTable
+ 0		L,	\ NumberOfSymbols
+ HERE to &opt_hdr_size 
+\ here to &opt_hdr_size
+ 0	W,	\ 54 SizeOfOptionalHeader
+
+ $2F		W,	\ Characteristics
+\ Optional Header, COFF Standard Fields
+ HERE TIMAGE-BASE - TO opt_hdr
+ $020b		W, 	\ Magic (PE32+)
+ $e		C,	\ MajorLinkerVersion
+ $16		C,	\ MinorLinkerVersion
+ HERE TO &CODESIZE
+ code_size	L,	\ SizeOfCode
+ 0		L,	\ 60 SizeOfInitializedData
+ 0		L,  	\ SizeOfUninitializedData
+ HERE TO &ENTRYCODE
+ $53F		L,	\ 68 AddressOfEntryPoint
+ 0		L,	\ BaseOfCode
+\ Optional Header, NT Additional Fields
+ TIMAGE-BASE 	,	\ ImageBase
+ $10		L,	\ SectionAlignment
+ $10		L,	\ bd FileAlignment
+ 6		W,	\ MajorOperatingSystemVersion
+ 0		W,	\ MinorOperatingSystemVersion
+ 0		W,	\ MajorImageVersion
+ 0		W,	\ MinorImageVersion
+ 6		W,	\ MajorSubsystemVersion
+ 0		W,	\ MinorSubsystemVersion
+ 0		L,	\ Reserved1
+ HERE TO SizeOfImage
+ file_size	L,	\ 90 SizeOfImage
+ here to &hdr_size
+ 0		L,	\ SizeOfHeaders
+ 0		L,  	\ CheckSum
+ 3		W,	\ Subsystem (Windows cons)
+ 0		W,	\ DllCharacteristics
+ $100000	,	\ SizeOfStackReserve
+ $1000		,	\ SizeOfStackCommit
+ $100000	,	\ SizeOfHeapReserve
+ 0		, 		\ SizeOfHeapCommit
+ 0		L,	\ LoaderFlags
+ $10		L,	\ NumberOfRvaAndSizes
+
+\ Optional Header, Data Directories
+ 0		L,	\ Export, RVA
+ 0		L,	\ Export, Size
+ HERE TO &itbl
+ itbl		L,	\ d0 Import, RVA
+ HERE TO &itbl_size
+ itbl_size	L,	\ Import, Size
+ 0		L,	\ Resource, RVA
+ 0		L,	\ Resource, Size
+ 0		L,	\ Exception, RVA
+ 0		L,	\ Exception, Size
+ 0		L,	\ Certificate, RVA
+ 0		L,	\ Certificate, Size
+ 0		L,	\ Base Relocation, RVA
+ 0		L,	\ Base Relocation, Size
+ 0		L,	\ Debug, RVA
+ 0		L,	\ Debug, Size
+ 0		L,	\ Architecture, RVA
+ 0		L,	\ Architecture, Size
+ 0		L,	\ Global Ptr, RVA
+ 0		L,	\ Global Ptr, Size
+ 0		L,	\ TLS, RVA
+ 0		L,	\ TLS, Size
+ 0		L,	\ Load Config, RVA
+ 0		L,	\ Load Config, Size
+ 0		L,	\ Bound Import, RVA
+ 0		L,	\ Bound Import, Size
+ 0		L,	\ IAT, RVA
+ 0		L,	\ IAT, Size
+ 0		L,	\ Delay Import Descriptor, RVA
+ 0		L,	\ Delay Import Descriptor, Size
+ 0		L,	\ CLR Runtime Header, RVA
+ 0		L,	\ CLR Runtime Header, Size
+ 0		L,	\ Reserved, RVA
+ 0		L,	\ Reserved, Size
+
+ here  opt_hdr -  &opt_hdr_size W!
+    S" .flat" HERE SWAP DUP 1+ 3 + 3 ANDC ALLOT MOVE
+ HERE TO &FLATSIZE
+ flat_sect_size L,	\ VirtualSize
+ 0		L,	\ VirtualAddress
+ flat_code_size	L,	\ SizeOfRawData
+ 0		L,	\ PointerToRawData
+ 0	L,	\ PointerToRelocations
+ 0	L,	\ PointerToLinenumbers
+ 0	W,	\ NumberOfRelocations
+ 0	W,	\ NumberOfLinenumbers
+ $E0000060 L,	\ Characteristics
+
+ HERE TIMAGE-BASE -  &hdr_size L!

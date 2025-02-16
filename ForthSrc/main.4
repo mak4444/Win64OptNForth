@@ -1,0 +1,26 @@
+
+HERE  TIMAGE-BASE - &ENTRYCODE L!
+GASM_BIG
+	$48 c, $83 c, $F0E4 W,              \   and rsp, 0xFFFF_FFFF_FFFF_FFF0
+	$48 c, $89 c, $E5 c,                  \   mov rbp, rsp
+	
+        sub    $0x20,%rsp
+        mov    $-0xB,%rcx
+        call   'GetStdHandle  (%rip)
+        add    $0x20,%rsp
+        mov     %rax,  ' H-STDOUT >BODY  (%rip)
+        sub    $0x20,%rsp
+        mov    $-0xC,%rcx
+        call   'GetStdHandle  (%rip)
+        add    $0x20,%rsp
+        mov     %rax,  ' H-STDERR >BODY   (%rip)
+        sub    $0x20,%rsp
+        mov    $-0xA,%rcx
+        call   'GetStdHandle  (%rip)
+        add    $0x20,%rsp
+        mov     %rax,  ' H-STDIN >BODY   (%rip)
+	mov    $ HERE FREE_size + -0xF ALSO FORTH AND [P] ,%rbp \ stack
+
+	JMP  ' FMAIN
+
+END-CODE

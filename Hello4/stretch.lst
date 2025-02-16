@@ -1,0 +1,332 @@
+     1                                  BITS 64
+     2                                  
+     3                                  %define align(n,r) (((n+(r-1))/r)*r)
+     4                                  
+     5                                  SSS_size equ 0x20000
+     6                                  ; DOS Header
+     7 00000000 4D5A                        dw 'MZ'                 ; e_magic
+     8 00000002 0000                        dw 0                    ; [UNUSED] e_cblp
+     9 00000004 0000                        dw 0                    ; [UNUSED] c_cp
+    10 00000006 0000                        dw 0                    ; [UNUSED] e_crlc
+    11 00000008 0000                        dw 0                    ; [UNUSED] e_cparhdr
+    12 0000000A 0000                        dw 0                    ; [UNUSED] e_minalloc
+    13 0000000C 0000                        dw 0                    ; [UNUSED] e_maxalloc
+    14 0000000E 0000                        dw 0                    ; [UNUSED] e_ss
+    15 00000010 0000                        dw 0                    ; [UNUSED] e_sp
+    16 00000012 0000                        dw 0                    ; [UNUSED] e_csum
+    17 00000014 0000                        dw 0                    ; [UNUSED] e_ip
+    18 00000016 0000                        dw 0                    ; [UNUSED] e_cs
+    19 00000018 0000                        dw 0                    ; [UNUSED] e_lfarlc
+    20 0000001A 0000                        dw 0                    ; [UNUSED] e_ovno
+    21 0000001C 0000<rep 4h>                times 4 dw 0            ; [UNUSED] e_res
+    22 00000024 0000                        dw 0                    ; [UNUSED] e_oemid
+    23 00000026 0000                        dw 0                    ; [UNUSED] e_oeminfo
+    24 00000028 0000<rep Ah>                times 10 dw 0           ; [UNUSED] e_res2
+    25 0000003C [40000000]                  dd pe_hdr               ; e_lfanew
+    26                                  
+    27                                  ; DOS Stub
+    28                                  ;    times 8 dq 0            ; [UNUSED] DOS Stub
+    29                                  
+    30                                  ; Rich Header
+    31                                  ;    times 8 dq 0            ; [UNUSED] Rich Header
+    32                                  
+    33                                  pe_hdr:
+    34 00000040 50450000                    dw 'PE', 0              ; Signature
+    35                                  
+    36                                  ; Image File Header
+    37 00000044 6486                        dw 0x8664               ; Machine
+    38 00000046 0100                        dw 0x01                 ; NumberOfSections
+    39 00000048 00000000                    dd 0                    ; [UNUSED] TimeDateStamp
+    40 0000004C 00000000                    dd 0                    ; PointerToSymbolTable
+    41 00000050 00000000                    dd 0                    ; NumberOfSymbols
+    42 00000054 F000                        dw opt_hdr_size         ; SizeOfOptionalHeader
+    43 00000056 2F00                        dw 0x2F                 ; Characteristics
+    44                                  
+    45                                  ; Optional Header, COFF Standard Fields
+    46                                  opt_hdr:
+    47 00000058 0B02                        dw 0x020b               ; Magic (PE32+)
+    48 0000005A 0E                          db 0x0e                 ; MajorLinkerVersion
+    49 0000005B 16                          db 0x16                 ; MinorLinkerVersion
+    50 0000005C EC020200                    dd code_size            ; SizeOfCode
+    51 00000060 00000000                    dd 0                    ; SizeOfInitializedData
+    52 00000064 00000000                    dd 0                    ; SizeOfUninitializedData
+    53 00000068 [33040000]                  dd entry                ; AddressOfEntryPoint
+    54                                  ;    dd iatbl                ; BaseOfCode
+    55 0000006C 00000000                    dd 0                ; BaseOfCode
+    56                                  
+    57                                  ; Optional Header, NT Additional Fields
+    58                                  ;    dq 0x000140000000       ; ImageBase
+    59 00000070 0000400000000000            dq 0x400000		; ImageBase
+    60 00000078 10000000                    dd 0x10                 ; SectionAlignment
+    61 0000007C 10000000                    dd 0x10                 ; FileAlignment
+    62 00000080 0600                        dw 0x06                 ; MajorOperatingSystemVersion
+    63 00000082 0000                        dw 0                    ; MinorOperatingSystemVersion
+    64 00000084 0000                        dw 0                    ; MajorImageVersion
+    65 00000086 0000                        dw 0                    ; MinorImageVersion
+    66 00000088 0600                        dw 0x06                 ; MajorSubsystemVersion
+    67 0000008A 0000                        dw 0                    ; MinorSubsystemVersion
+    68 0000008C 00000000                    dd 0                    ; Reserved1
+    69 00000090 5C040200                    dd file_size            ; SizeOfImage
+    70 00000094 70010000                    dd hdr_size             ; SizeOfHeaders
+    71 00000098 00000000                    dd 0                    ; CheckSum
+    72 0000009C 0300                        dw 0x03                 ; Subsystem (Windows)
+    73 0000009E 0000                        dw 0 ; x8160               ; DllCharacteristics
+    74 000000A0 0000100000000000            dq 0x100000             ; SizeOfStackReserve
+    75 000000A8 0010000000000000            dq 0x1000               ; SizeOfStackCommit
+    76 000000B0 0000100000000000            dq 0x100000             ; SizeOfHeapReserve
+    77 000000B8 0000000000000000            dq 0 ; x1000               ; SizeOfHeapCommit
+    78 000000C0 00000000                    dd 0                    ; LoaderFlags
+    79 000000C4 10000000                    dd 0x10                 ; NumberOfRvaAndSizes
+    80                                  
+    81                                  ; Optional Header, Data Directories
+    82 000000C8 00000000                    dd 0                    ; Export, RVA
+    83 000000CC 00000000                    dd 0                    ; Export, Size
+    84 000000D0 [AC030000]                  dd itbl                 ; Import, RVA
+    85 000000D4 28000000                    dd itbl_size            ; Import, Size
+    86 000000D8 00000000                    dd 0                    ; Resource, RVA
+    87 000000DC 00000000                    dd 0                    ; Resource, Size
+    88 000000E0 00000000                    dd 0                    ; Exception, RVA
+    89 000000E4 00000000                    dd 0                    ; Exception, Size
+    90 000000E8 00000000                    dd 0                    ; Certificate, RVA
+    91 000000EC 00000000                    dd 0                    ; Certificate, Size
+    92 000000F0 00000000                    dd 0                    ; Base Relocation, RVA
+    93 000000F4 00000000                    dd 0                    ; Base Relocation, Size
+    94 000000F8 00000000                    dd 0                    ; Debug, RVA
+    95 000000FC 00000000                    dd 0                    ; Debug, Size
+    96 00000100 00000000                    dd 0                    ; Architecture, RVA
+    97 00000104 00000000                    dd 0                    ; Architecture, Size
+    98 00000108 00000000                    dd 0                    ; Global Ptr, RVA
+    99 0000010C 00000000                    dd 0                    ; Global Ptr, Size
+   100 00000110 00000000                    dd 0                    ; TLS, RVA
+   101 00000114 00000000                    dd 0                    ; TLS, Size
+   102 00000118 00000000                    dd 0                    ; Load Config, RVA
+   103 0000011C 00000000                    dd 0                    ; Load Config, Size
+   104 00000120 00000000                    dd 0                    ; Bound Import, RVA
+   105 00000124 00000000                    dd 0                    ; Bound Import, Size
+   106 00000128 00000000                    dd 0 ; iatbl                ; IAT, RVA
+   107 0000012C 00000000                    dd 0 ; iatbl_size           ; IAT, Size
+   108 00000130 00000000                    dd 0                    ; Delay Import Descriptor, RVA
+   109 00000134 00000000                    dd 0                    ; Delay Import Descriptor, Size
+   110 00000138 00000000                    dd 0                    ; CLR Runtime Header, RVA
+   111 0000013C 00000000                    dd 0                    ; CLR Runtime Header, Size
+   112 00000140 00000000                    dd 0                    ; Reserved, RVA
+   113 00000144 00000000                    dd 0                    ; Reserved, Size
+   114                                  
+   115                                  opt_hdr_size equ $-opt_hdr
+   116                                  
+   117                                  ; Section Table
+   118 00000148 2E666C6174                  section_name db '.flat'     ; Name
+   119 0000014D 00<rep 3h>                  times 8-($-section_name) db 0
+   120 00000150 EC020000                    dd sect_size            ; VirtualSize
+   121 00000154 00000000                    dd 0 ; iatbl                ; VirtualAddress
+   122 00000158 00002000                    dd flat_code_size            ; SizeOfRawData
+   123 0000015C 00000000                    dd 0 ; iatbl                ; PointerToRawData
+   124 00000160 00000000                    dd 0                    ; PointerToRelocations
+   125 00000164 00000000                    dd 0                    ; PointerToLinenumbers
+   126 00000168 0000                        dw 0                    ; NumberOfRelocations
+   127 0000016A 0000                        dw 0                    ; NumberOfLinenumbers
+   128                                  ;    dd 0x60000020           ; Characteristics
+   129 0000016C 600000E0                    dd 0xE0000060           ; Characteristics
+   130                                  
+   131                                  hdr_size equ $-$$
+   132                                  
+   133                                  code:
+   134                                  ; Symbol
+   135                                  MessageBoxW_n:
+   136 00000170 0000                        dw 0x0              ; [UNUSED] Function Order
+   137 00000172 4D657373616765426F-         db 'MessageBoxW', 0     ; Function Name
+   137 0000017B 785700             
+   138                                  
+   139                                  SetFocus_n:
+   140 0000017E 0000                        dw 0x0              ; [UNUSED] Function Order
+   141 00000180 536574466F63757300          db 'SetFocus', 0     ; Function Name
+   142                                  
+   143                                  ; Import Name Table
+   144                                  intbl:
+   145 00000189 [7001000000000000]          dq MessageBoxW_n
+   146 00000191 [7E01000000000000]          dq SetFocus_n
+   147 00000199 0000000000000000            dq 0
+   148                                  
+   149                                  ; Import Address Directory
+   150                                  iatbl:
+   151                                  MessageBoxW_b:
+   152 000001A1 [7001000000000000]          dq MessageBoxW_n
+   153                                  SetFocus_b:
+   154 000001A9 [7E01000000000000]          dq SetFocus_n
+   155 000001B1 0000000000000000            dq 0
+   156                                  
+   157                                  
+   158                                  dll_name:
+   159 000001B9 5553455233322E646C-         db 'USER32.dll', 0
+   159 000001C2 6C00               
+   160                                  
+   161                                  ; Symbol
+   162                                  
+   163 000001C4 0000                     CloseHandle_n:		dw 0x0
+   164 000001C6 436C6F736548616E64-         db 'CloseHandle', 0        
+   164 000001CF 6C6500             
+   165 000001D2 0000                     CreateFileA_n:		dw 0x0
+   166 000001D4 43726561746546696C-         db 'CreateFileA', 0        
+   166 000001DD 654100             
+   167 000001E0 0000                     CreateThread_n:	dw 0x0
+   168 000001E2 437265617465546872-         db 'CreateThread', 0       
+   168 000001EB 65616400           
+   169 000001EF 0000                     ExitProcess_n:		dw 0x0
+   170 000001F1 4578697450726F6365-         db 'ExitProcess', 0        
+   170 000001FA 737300             
+   171 000001FD 0000                     GetCommandLineA_n:	dw 0x0
+   172 000001FF 476574436F6D6D616E-         db 'GetCommandLineA', 0    
+   172 00000208 644C696E654100     
+   173 0000020F 0000                     GetProcAddress_n:	dw 0x0
+   174 00000211 47657450726F634164-        db 'GetProcAddress', 0     
+   174 0000021A 647265737300       
+   175 00000220 0000                     GetStdHandle_n:	dw 0x0
+   176 00000222 47657453746448616E-         db 'GetStdHandle', 0       
+   176 0000022B 646C6500           
+   177 0000022F 0000                     LoadLibraryA_n:	dw 0x0
+   178 00000231 4C6F61644C69627261-         db 'LoadLibraryA', 0       
+   178 0000023A 72794100           
+   179 0000023E 0000                     ReadConsoleInputA_n:	dw 0x0
+   180 00000240 52656164436F6E736F-         db 'ReadConsoleInputA', 0  
+   180 00000249 6C65496E7075744100 
+   181 00000252 0000                     ReadFile_n:		dw 0x0
+   182 00000254 5265616446696C6500          db 'ReadFile', 0           
+   183 0000025D 0000                     SetFilePointer_n:	dw 0x0
+   184 0000025F 53657446696C65506F-         db 'SetFilePointer', 0     
+   184 00000268 696E74657200       
+   185 0000026E 0000                     Sleep_n:		dw 0x0
+   186 00000270 536C65657000                db 'Sleep', 0              
+   187 00000276 0000                     VirtualAlloc_n:	dw 0x0
+   188 00000278 5669727475616C416C-         db 'VirtualAlloc', 0       
+   188 00000281 6C6F6300           
+   189 00000285 0000                     VirtualFree_n:		dw 0x0
+   190 00000287 5669727475616C4672-         db 'VirtualFree', 0        
+   190 00000290 656500             
+   191 00000293 0000                     WriteFile_n:		dw 0x0
+   192 00000295 577269746546696C65-         db 'WriteFile', 0          
+   192 0000029E 00                 
+   193                                  
+   194                                  
+   195                                  ; Import Name Table
+   196                                  intbl_k:
+   197 0000029F [C401000000000000]        CloseHandle_a:         dq CloseHandle_n
+   198 000002A7 [D201000000000000]        CreateFileA_a:         dq CreateFileA_n
+   199 000002AF [E001000000000000]        CreateThread_a:        dq CreateThread_n
+   200 000002B7 [EF01000000000000]        ExitProcess_a:         dq ExitProcess_n
+   201 000002BF [FD01000000000000]        GetCommandLineA_a:     dq GetCommandLineA_n
+   202 000002C7 [0F02000000000000]        GetProcAddress_a:      dq GetProcAddress_n
+   203 000002CF [2002000000000000]        GetStdHandle_a:        dq GetStdHandle_n
+   204 000002D7 [2F02000000000000]        LoadLibraryA_a:        dq LoadLibraryA_n
+   205 000002DF [3E02000000000000]        ReadConsoleInputA_a:   dq ReadConsoleInputA_n
+   206 000002E7 [5202000000000000]        ReadFile_a:            dq ReadFile_n
+   207 000002EF [5D02000000000000]        SetFilePointer_a:      dq SetFilePointer_n
+   208 000002F7 [6E02000000000000]        Sleep_a:               dq Sleep_n
+   209 000002FF [7602000000000000]        VirtualAlloc_a:        dq VirtualAlloc_n
+   210 00000307 [8502000000000000]        VirtualFree_a:         dq VirtualFree_n
+   211 0000030F [9302000000000000]        WriteFile_a:           dq WriteFile_n
+   212 00000317 0000000000000000         dq 0
+   213                                  ; Import Address Directory
+   214                                  iatbl_k:
+   215 0000031F [C401000000000000]        CloseHandle_b:        dq CloseHandle_n        
+   216 00000327 [D201000000000000]        CreateFileA_b:        dq CreateFileA_n        
+   217 0000032F [E001000000000000]        CreateThread_b:       dq CreateThread_n       
+   218 00000337 [EF01000000000000]        ExitProcess_b:        dq ExitProcess_n        
+   219 0000033F [FD01000000000000]        GetCommandLineA_b:    dq GetCommandLineA_n    
+   220 00000347 [0F02000000000000]        GetProcAddress_b:     dq GetProcAddress_n     
+   221 0000034F [2002000000000000]        GetStdHandle_b:       dq GetStdHandle_n       
+   222 00000357 [2F02000000000000]        LoadLibraryA_b:       dq LoadLibraryA_n       
+   223 0000035F [3E02000000000000]        ReadConsoleInputA_b:  dq ReadConsoleInputA_n  
+   224 00000367 [5202000000000000]        ReadFile_b:           dq ReadFile_n           
+   225 0000036F [5D02000000000000]        SetFilePointer_b:     dq SetFilePointer_n     
+   226 00000377 [6E02000000000000]        Sleep_b:              dq Sleep_n              
+   227 0000037F [7602000000000000]        VirtualAlloc_b:       dq VirtualAlloc_n       
+   228 00000387 [8502000000000000]        VirtualFree_b:        dq VirtualFree_n        
+   229 0000038F [9302000000000000]        WriteFile_b:          dq WriteFile_n          
+   230 00000397 0000000000000000         dq 0
+   231                                  
+   232                                  
+   233                                  dll_name_k:
+   234 0000039F 4B45524E454C33322E-         db 'KERNEL32.dll', 0
+   234 000003A8 646C6C00           
+   235                                  
+   236                                  iatbl_size equ $-iatbl
+   237                                  
+   238                                  ; Import Directory
+   239                                  itbl:
+   240 000003AC [9F02000000000000]          dq intbl_k                ; OriginalFirstThunk
+   241 000003B4 00000000                    dd 0                    ; TimeDateStamp
+   242 000003B8 [9F030000]                  dd dll_name_k             ; ForwarderChain
+   243 000003BC [1F030000]                  dd iatbl_k                ; Name
+   244                                  
+   245 000003C0 [8901000000000000]          dq intbl                ; OriginalFirstThunk
+   246 000003C8 00000000                    dd 0                    ; TimeDateStamp
+   247 000003CC [B9010000]                  dd dll_name             ; ForwarderChain
+   248 000003D0 [A1010000]                  dd iatbl                ; Name
+   249                                  
+   250                                  
+   251                                  ;    dq 0                    ; FirstThunk
+   252                                  
+   253                                  
+   254                                  ;    times 3 dd 0
+   255                                  
+   256                                  itbl_size equ $-itbl
+   257                                  
+   258                                  ; Debug Table
+   259                                  ;    times 24 dq 0           ; [UNUSED] Debug Table
+   260                                  
+   261                                  %define STD_OUTPUT_HANDLE (-11)
+   262                                  
+   263 000003D4 48656C6C6F20576F72-     hello_str db "Hello World", 13, 10
+   263 000003DD 6C640D0A           
+   264                                  hello_size equ ($ - hello_str)
+   265                                  
+   266 000003E1 00<rep 3h>              times align($-$$,4)-($-$$) db 0
+   267                                  
+   268 000003E4 0000000000000000        output_handle dq 0
+   269                                  
+   270                                  
+   271                                  ;    call [rel ExitProcess_a]
+   272                                  QQQ:
+   273 000003EC 488305F020000001            ADD QWORD [rel (MMM + 0x2090)], 1
+   274 000003F4 488B05E9200000          	MOV RAX, [rel (MMM + 0x2090)]
+   275                                  
+   276 000003FB 8805D3FFFFFF            	MOV  [rel hello_str] , AL
+   277                                  
+   278 00000401 4883EC30                    sub rsp, 48
+   279 00000405 488B0DD8FFFFFF              mov rcx, [rel output_handle] ;    mov rcx, rax
+   280                                  ;    mov rdx,  hello_str+0x400000
+   281 0000040C 488D15C1FFFFFF              lea rdx,  [rel hello_str] 
+   282 00000413 41B80D000000                mov r8d,  hello_size
+   283 00000419 41B900000000                mov r9, 0
+   284 0000041F 48C744242000000000          mov QWORD [rsp + 32], 0
+   285 00000428 FF1561FFFFFF                call [rel WriteFile_b] 
+   286                                      ;D?truit l'espace de pile allou? pour les param?tres de la fonction
+   287 0000042E 4883C430                    add rsp, 48
+   288 00000432 C3                          RET
+   289                                  
+   290                                  ; Entry
+   291                                  entry:
+   292                                      ;Aligne la pile
+   293 00000433 4883E4F0                    and rsp, 0xFFFF_FFFF_FFFF_FFF0
+   294 00000437 4889E5                      mov rbp, rsp
+   295                                  
+   296 0000043A B9F5FFFFFF                  mov ecx, STD_OUTPUT_HANDLE
+   297 0000043F FF150AFFFFFF                call [rel GetStdHandle_b] 
+   298 00000445 48890598FFFFFF              mov [rel output_handle], rax
+   299                                  QQQS:
+   300 0000044C E89BFFFFFF                  CALL QQQ
+   301 00000451 EBF9                        JMP QQQS
+   302                                  
+   303 00000453 00                      times align($-$$,4)-($-$$) db 0
+   304 00000454 0000000000000000        MMM: dq 0
+   305                                  ;    times align($-$$,16)-($-$$) db 0xcc
+   306                                  
+   307                                  
+   308                                  sect_size equ $-code
+   309                                  
+   310                                  ;    times align($-$$,16)-($-$$) db 0
+   311                                  
+   312                                  ;flat_code_size equ $-code+0x100000
+   313                                  flat_code_size equ 0x200000
+   314                                  code_size equ $-code+SSS_size
+   315                                  file_size equ $-$$+SSS_size

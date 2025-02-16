@@ -1,0 +1,67 @@
+ HERE
+ NFUNK> MessageBoxW
+ NFUNK> SetFocus
+ HERE DUP TIMAGE-BASE -	TO intbl 2DUP	NFUNKS
+ HERE TIMAGE-BASE -	TO iatbl	NFUNKS
+ 
+ HERE TIMAGE-BASE - TO dll_name
+
+
+ ZSTR>, USER32.dll
+
+ HERE \ Symbol
+ NFUNK> CloseHandle
+ NFUNK> CreateFileA
+ NFUNK> CreateThread
+ NFUNK> ExitProcess
+ NFUNK> GetCommandLineA
+ NFUNK> GetProcAddress
+ NFUNK> GetStdHandle
+ NFUNK> LoadLibraryA
+ NFUNK> ReadConsoleInputA
+ NFUNK> ReadFile   
+ NFUNK> SetFilePointer
+ NFUNK> Sleep      
+ NFUNK> VirtualAlloc
+ NFUNK> VirtualFree
+ NFUNK> WriteFile  
+ HERE DUP TIMAGE-BASE -	TO intbl_k 2DUP	NFUNKS
+   HERE TIMAGE-BASE -	TO iatbl_k \ 	NFUNKS
+
+DROP \ Symbol 
+HERE TO 'CloseHandle		,NEXTFUNK
+HERE TO 'CreateFileA            ,NEXTFUNK
+HERE TO 'CreateThread           ,NEXTFUNK
+HERE TO 'ExitProcess            ,NEXTFUNK
+HERE TO 'GetCommandLineA        ,NEXTFUNK
+HERE TO 'GetProcAddress         ,NEXTFUNK
+HERE TO 'GetStdHandle           ,NEXTFUNK
+HERE TO 'LoadLibraryA           ,NEXTFUNK
+HERE TO 'ReadConsoleInputA      ,NEXTFUNK
+HERE TO 'ReadFile               ,NEXTFUNK
+HERE TO 'SetFilePointer         ,NEXTFUNK
+HERE TO 'Sleep                  ,NEXTFUNK
+HERE TO 'VirtualAlloc           ,NEXTFUNK
+HERE TO 'VirtualFree            ,NEXTFUNK
+HERE TO 'WriteFile              ,NEXTFUNK
+DROP 0 ,
+
+ HERE TIMAGE-BASE - TO dll_name_k
+ ZSTR>, KERNEL32.dll
+ 
+HERE DUP TO itbl TIMAGE-BASE - &itbl L!
+	intbl_k ,	\ OriginalFirstThunk
+	0 L,
+    	dll_name_k L,	\ ForwarderChain
+    	iatbl_k L,	\ Name
+
+	intbl ,		\ OriginalFirstThunk
+	0 L,
+    	dll_name L,	\ ForwarderChain
+    	iatbl L,	\ Name
+	0 ,
+	0 L, 0 L, 0 L,
+
+HERE itbl - &itbl_size L!
+
+

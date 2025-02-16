@@ -1,0 +1,14 @@
+./Edit.4
+~mak/win/grath.4
+
+
+VARIABLE RND-G
+
+: RANDOM-G ( -- U )   RND-G @ $55 + 0x3333333333 * 16 >> DUP RND-G ! $FF AND $80 - ;
+
+: TEST  0 DO  44 SLEEP
+ RANDOM-G TO-G
+ RANDOM-G TO-B
+ RANDOM-G TO-R
+  LOOP ;
+ GR-S $100 TEST

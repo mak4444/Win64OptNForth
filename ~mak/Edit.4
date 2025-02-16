@@ -1,0 +1,588 @@
+YDP @ 0= [IF] 0xf0000 ALLOCATE THROW DUP  YDP0 ! YDP ! [THEN]
+-1 TO YDP_FL
+ REQUIRE MODULE: lib/ext/spf_modules.f
+ REQUIRE CASE-INS lib\ext\caseins.f
+~mak\gasm64\gasm64.4 
+
+REQUIRE WAPI_2: lib\WAPI.4
+REQUIRE [IFNDEF] _nn\lib\ifdef.f
+REQUIRE { ~mak\locals.f
+REQUIRE (*	~af\lib\comments.f \ *)
+
+REQUIRE OFD_STR ~mak\fdialog.4 
+REQUIRE FILE-SIZE ~mak/lib/ftools.4 
+
+REQUIRE ENS-CASE ~mak\case.f
+REQUIRE NEAR_NFA ~mak\NEARNFA.4TH
+REQUIRE VIEWS_SEARCH ~mak/tools/DEFVIEW.F
+~mak\EditAPI.4 
+
+\- BOUNDS : BOUNDS OVER + SWAP ;
+
+[IFNDEF] ZCOUNT
+: ZCOUNT	\ zaddr -- zaddr len
+\ *G A version of *\fo{COUNT} for zero terminated strings, returning
+\ ** the address of the first character and the length.
+  dup
+  begin dup c@ ( 0<> )
+  while 1+
+  repeat over -
+;
+
+[THEN]
+
+: ZNLIST ( A -> )
+  BEGIN ?DUP
+  WHILE
+    DUP ID.
+    CDR
+  REPEAT \ KEY? IF KEY DROP THEN
+;
+
+\- Z" : Z" POSTPONE S"  POSTPONE DROP  ; IMMEDIATE
+
+: FileDLG ( -- adr len )
+	OFD_STR GetOpenFileNameA DROP LPSTRFILE ZCOUNT ;
+
+ S" EDIT.LOG" W/O CREATE-FILE-SHARED THROW CONSTANT EDIT.LOG
+
+\- LAST-NON 0 VALUE LAST-NON
+\- :NONAME : :NONAME ( C: -- colon-sys ) ( S: -- xt ) \ 94 CORE EXT
+\- :NONAME  HERE DUP TO LAST-NON [COMPILE] ] ;
+
+[IFNDEF] A-FIELD
+: A-FIELD	\ offset size -- offset'
+\ *G Equivalent to *\fo{FIELD} but aligns the start of the item to
+\ ** the required size. Alignment is only applied to items of size
+\ ** 2, 4, 8 and 16 bytes.
+  CASE DUP
+	2 OF  SWAP 1+ -2 AND SWAP  ENDOF
+	4 OF  SWAP 3 + -4 AND SWAP  ENDOF
+	8 OF  SWAP 7 + -8 AND SWAP  ENDOF
+	16 OF  SWAP 15 + -16 AND SWAP  ENDOF
+  ENDCASE
+  FIELD
+;
+
+[THEN]
+
+[IFNDEF] /MSG
+
+0
+8 A-FIELD MSG.hwnd
+4 A-FIELD MSG.message
+8 A-FIELD MSG.wParam
+8 A-FIELD MSG.lParam
+4 A-FIELD MSG.time
+8 A-FIELD MSG.pt
+4 A-FIELD MSG.ex
+CONSTANT /MSG
+[THEN]
+
+\- LOWORD : LOWORD ( lpar -- loword ) 0x0FFFF AND ;
+\- HIWORD : HIWORD ( lpar -- hiword ) 0x10000 /  ;
+
+MODULE: EDIT-MOD \ -------------------------------------------
+
+0 VALUE EdHWnd
+0 VALUE WINID
+
+\- EditKeyClassName : EditKeyClassName S" SP-FORTH EditKey" DROP ;
+
+1 4 LSHIFT CONSTANT MAX#ED_FN
+
+0 VALUE #ED_FN
+
+CREATE EDIT_FN_B 0x101	 MAX#ED_FN * ALLOT
+CREATE EDIT_SL_B 2 CELLS MAX#ED_FN * ALLOT
+
+: EDIT_FN	EDIT_FN_B #ED_FN 0x101	* + ;
+: EDIT_SL	EDIT_SL_B #ED_FN 2 CELLS * + ;
+
+TRUE VALUE EDIT-END
+
+0 VALUE Content
+0 VALUE SizeEd
+
+
+: SendToEd ( lParam wParam Msg -- u )
+  EdHWnd SWAP 2SWAP  SendMessageA
+ ;
+
+: 0SendToEd ( Msg -- )
+  EdHWnd SWAP  0 0  SendMessageA DROP ;
+
+
+: EDIT_FN!  ( ADDR LEN -- )
+	EDIT_FN $!
+	EDIT_FN COUNT + 0! ;
+
+VARIABLE EDIT_XY  0 ,
+
+: EDIT_XY!  EDIT_XY 2! ;
+
+: EDIT_SEL	(  bb ee -- )
+	EM_SETSEL SendToEd DROP
+	0 0 EM_SCROLLCARET SendToEd DROP
+;
+
+: EDIT_SEL_GET { \ bb ee -- bb ee }
+  ^ bb ^ ee  EM_GETSEL  SendToEd DROP
+  bb ee
+;
+
+: NEXT_F EDIT_SEL_GET EDIT_SL 2!
+         #ED_FN 1+ MAX#ED_FN 1- AND TO #ED_FN ;
+: LAST_F #ED_FN 1- MAX#ED_FN 1- AND TO #ED_FN ;
+
+: PUSH-WINDOW ( hwnd -- prev-hwnd)
+	DUP	SetActiveWindow >R
+	DUP	SetFocus DROP
+	DUP	SetForegroundWindow DROP
+		BringWindowToTop DROP
+	R>
+;
+
+:  EDIT_SCROLL  ( yy -- )
+   6 +
+	0 0 EM_GETLINECOUNT SendToEd 1- MIN
+   0
+  EM_LINEINDEX   SendToEd DUP
+  EDIT_SEL
+;
+
+: EDIT_XY_SET { xx yy -- }
+  yy  EDIT_SCROLL
+  yy 0  EM_LINEINDEX   SendToEd xx + DUP
+  EM_SETSEL	SendToEd DROP
+  0 0 EM_SCROLLCARET   SendToEd DROP
+   EdHWnd PUSH-WINDOW DROP
+;
+
+: EDIT_Load  ( -- )
+ {  \  fid -- }
+  EDIT_FN COUNT
+  R/O OPEN-FILE-SHARED 0= IF \ ." FILE OK"
+  DUP TO fid
+
+	FILE-SIZE DROP ( THROW) DROP ?DUP IF
+	1+ DUP TO SizeEd
+	ALLOCATE THROW DUP TO Content
+	 SizeEd 1-  fid READ-FILE 2DROP
+	 EdHWnd WM_SETTEXT 0  Content SendMessageA DROP
+	 0 0 EM_SETMODIFY SendToEd DROP
+	0 0 WM_GETTEXTLENGTH SendToEd DROP
+	0 0 WM_SETCURSOR     SendToEd DROP
+
+	WINID EDIT_FN 1+  SetWindowTextA DROP
+
+	Content FREE DROP \ THROW
+	THEN
+	fid CLOSE-FILE DROP \ THROW
+  ELSE \ ." FILE ERROR"
+    DROP
+  THEN
+;
+
+: EDIT_Save  ( <filename> -- )
+  { fna fnl \  fid  -- }
+\  E?R/O IF 0  S" EDIT" DROP  S" The file is saveless" DROP
+\	MB_OK \ MB_ICONSTOP OR MB_SYSTEMMODAL OR
+\  MessageBoxA DROP
+\ EXIT THEN
+
+  0 0 WM_GETTEXTLENGTH SendToEd 1+ DUP TO SizeEd
+
+  SizeEd
+  ALLOCATE THROW DUP TO Content
+  WM_GETTEXT SendToEd DROP
+
+   fna fnl W/O CREATE-FILE THROW TO fid
+
+  Content SizeEd 1- fid WRITE-FILE THROW
+
+  Content FREE THROW
+  fid CLOSE-FILE THROW
+  0 0 EM_SETMODIFY SendToEd DROP
+ ;
+
+: ?SaveCng
+       0 0 EM_GETMODIFY SendToEd 0=
+       IF IDNO EXIT THEN
+       EdHWnd
+       Z" Text was modified. Save changes?"
+       Z" Warning"
+       MB_YESNOCANCEL
+       LANG_ENGLISH
+       MessageBoxExA
+;
+
+: ?LoadDo  ( addr len -- )
+    ?SaveCng
+    DUP IDYES =
+    IF  EDIT_FN COUNT ['] EDIT_Save CATCH DROP \ ." S=" .
+    THEN
+    IDCANCEL <>
+    IF NEXT_F EDIT_FN! EDIT_Load
+    ELSE 2DROP
+    THEN
+;
+
+0 VALUE EdWndProc
+
+0
+4 FIELD .cpMin
+4 FIELD .cpMax
+4 FIELD .lpBuffer
+
+CONSTANT FINDTEXT
+
+CREATE FTTT FINDTEXT ALLOT 
+
+ 0 C, HERE 0x100 ALLOT
+ CONSTANT VVV
+
+TlsIndex@ VALUE OPER_E
+
+CREATE TABBBB  9 C, 0 C,
+CREATE BLBBBB BL C, 0 C,
+CREATE CRBBBB 0xD C, 0 C,
+VARIABLE VXY CELL ALLOT
+
+:  FIND_DO
+
+;
+
+: FIND_DO_F11  {  \ tstart tend lstart llength -- }
+	EDIT_SEL_GET -> tend  -> tstart 
+	-1 0 EM_LINEINDEX SendToEd -> lstart	\ find start of line
+    lstart 0 EM_LINELENGTH SendToEd -> llength	\ find length of line
+   lstart  llength $100 UMIN bounds EM_SETSEL SendToEd drop	\ select line ; SFP007
+   0 VVV   EM_GETSELTEXT SendToEd DROP
+   VVV  tstart lstart - + 
+    DUP BEGIN  1- DUP C@ BL U<= UNTIL 1+
+    SWAP  BEGIN  DUP C@ BL U>  WHILE 1+ REPEAT
+    OVER -
+     tstart tend  EDIT_SEL
+\	OPER_E TlsIndex@ >OUT $20 + OVER - CMOVE 
+\	S-O TO CONTEXT
+\   FORTH
+\  ORDER
+  TlsIndex@ >R  OPER_E TlsIndex!  VIEWS_SEARCH
+  R> TlsIndex!
+ ?DUP IF  COUNT ?LoadDo NAME>F 4 + L@ 0 SWAP EDIT_XY_SET THEN
+
+;
+
+
+\ :NONAME    { hwnd msg wpar lpar \  hdc hout res -- res }
+:NONAME    { hwnd msg wpar lpar \ tstart tend lstart llength  hdc hout res -- res }
+
+   H-STDOUT -> hout
+  EDIT.LOG TO H-STDOUT
+   DECIMAL
+
+\ cr ." MyEdWndProc="  hwnd h. msg h. wpar h. lpar h.
+  msg case
+
+   WM_KEYDOWN of \     cr ." VK_DOWN"
+	wpar
+
+	 CASE
+		VK_F2  OF EDIT_FN COUNT ['] EDIT_Save CATCH DROP ENDOF
+		VK_F3  OF 	ENDOF
+		VK_F4  OF 	ENDOF
+		VK_F6  OF 	ENDOF
+		VK_F7  OF 	ENDOF
+		VK_F8  OF 	ENDOF
+		VK_F9  OF 	ENDOF
+        VK_F11 OF ['] FIND_DO_F11 CATCH DROP	ENDOF
+	    VK_F12 OF LAST_F EDIT_Load  EDIT_SL 2@ EDIT_SEL ENDOF
+		EdWndProc hwnd msg wpar lpar CallWindowProcA  -> res
+	ENDCASE
+  endof	EdWndProc hwnd msg wpar lpar CallWindowProcA  -> res
+  endcase
+ hout TO H-STDOUT
+
+  res
+  
+;
+
+WNDPROC: MyEdWndProc
+
+: DoCommand
+\ CR ." DoCommand=" DUP H.  DUP .
+  CASE
+	cmdInclude	OF FileDLG DUP
+			IF EDIT_FN! EDIT_Load
+			ELSE DROP
+			THEN
+		ENDOF
+
+	cmdSaveAs	OF FileDLG DUP
+			IF EDIT_Save
+			ELSE DROP
+			THEN
+		ENDOF
+
+	cmdSave		OF  EDIT_FN COUNT ['] EDIT_Save CATCH DROP \ ." S=" .
+		ENDOF
+
+	cmdRestore	OF  EDIT_Load
+		ENDOF
+
+	cmdBYE  	OF 0 0 WM_CLOSE   WINID SendMessageA DROP ENDOF
+	cmdCUT  	OF WM_CUT   0SendToEd ENDOF
+	cmdCOPY 	OF WM_COPY  0SendToEd ENDOF
+	cmdPASTE	OF WM_PASTE 0SendToEd ENDOF
+\	cmdFIND 	OF FindStruct FindTextA  FindHWND ! ENDOF
+(*
+	cmdGOTO   OF F4_EDIT cmdDBG TO ED_WATE  ENDOF
+	cmdOUT    OF F6_EDIT cmdDBG TO ED_WATE  ENDOF
+	cmdSTEP   OF F7_EDIT cmdDBG TO ED_WATE  ENDOF
+	cmdOVER   OF F8_EDIT cmdDBG TO ED_WATE  ENDOF
+	cmdGO     OF F9_EDIT cmdDBG TO ED_WATE  ENDOF
+	cmdFORTH  OF     cmdFORTH   TO ED_WATE  ENDOF
+	cmdABORT  OF     cmdABORT   TO ED_WATE  ENDOF
+	cmdHEX    OF     cmdHEX     TO ED_WATE  ENDOF
+	cmdDEC    OF     cmdDEC     TO ED_WATE  ENDOF
+
+	cmdTst      OF ENDOF
+*)
+    ENDCASE
+;
+
+:NONAME		{ hwnd msg wpar lpar \  hdc hout res -- res }
+
+\	RP@ $1000 +  TlsIndex!
+
+\  H-STDOUT -> hout
+\  EDIT.LOG TO H-STDOUT
+\ DECIAML
+\  CR ." M=" HEX hwnd . msg . wpar . lpar .
+
+  msg CASE
+
+   WM_CREATE OF
+
+ WS_EX_CLIENTEDGE
+\ Z" EDIT" 
+ Z" RichEdit"
+ 0 
+ WS_CHILD  WS_VISIBLE OR
+ WS_HSCROLL OR WS_VSCROLL OR 
+ ES_AUTOHSCROLL OR ES_AUTOVSCROLL OR
+ ES_MULTILINE OR
+	0  0  0  0   hwnd  0 IMAGE-BASE 0
+ CreateWindowExA
+\ DUP FindOwner !
+ TO EdHWnd
+
+      EdHWnd UpdateWindow   DROP
+      EdHWnd SW_SHOW ShowWindow  DROP
+\      hwnd GetDC -> hdc
+\      logfont CreateFontIndirectA TO hFont
+\      EdHWnd SetFocus DROP
+
+    WM_SETFONT
+    ANSI_FIXED_FONT getstockobject
+    1 SendMessageA drop
+
+	EdHWnd EM_EXLIMITTEXT 0 100000000
+	SendMessageA  DROP
+
+   EdHWnd  GWLP_WNDPROC ['] MyEdWndProc  SetWindowLongPtrA TO EdWndProc
+
+      hwnd hdc ReleaseDC DROP
+
+   ENDOF
+
+   WM_SIZE OF
+	EdHWnd
+	0 0
+	lpar LOWORD
+	lpar HIWORD
+	1
+	MoveWindow DROP
+   ENDOF    \ 2  
+
+   WM_SETFOCUS OF
+\      WINID SetFocus DROP
+      EdHWnd SetFocus DROP
+\	hwnd msg wpar lpar DefWindowProcA -> res
+   ENDOF   \ 3
+
+   WM_COMMAND of   wpar DoCommand  ENDOF
+
+    DUP WM_DESTROY = IF TRUE TO EDIT-END THEN
+
+
+    hwnd msg wpar lpar DefWindowProcA -> res
+
+  endcase
+\   hout -> H-STDOUT
+
+  res
+  
+ ;
+
+ WNDPROC: EditWndProc2
+
+CREATE EEFF   $55555555 ,
+
+
+
+: CreateMainMenu ( -- hmenu )
+  CreatePopupMenu >R
+ R@ MF_STRING cmdInclude	Z" &Open"	AppendMenuA DROP \  APPENDM DROP
+ R@ MF_STRING cmdSave		Z" &Save\tF2"	AppendMenuA DROP
+ R@ MF_STRING cmdSaveAs		Z" Save &As"	AppendMenuA DROP
+ R@ MF_STRING cmdRestore	Z" &Restore"	AppendMenuA DROP
+ R@ MF_STRING cmdBYE		Z" E&xit"	AppendMenuA DROP
+
+    R>  CreateMenu  DUP >R  MF_POPUP  ROT Z" &File" AppendMenuA DROP
+
+  CreatePopupMenu >R
+
+ R@ MF_STRING cmdCUT	Z" C&ut"	AppendMenuA DROP
+ R@ MF_STRING cmdCOPY	Z" &Copy"	AppendMenuA DROP
+ R@ MF_STRING cmdPASTE	Z" &Paste"	AppendMenuA DROP
+
+	R> R@  MF_POPUP ROT	Z" &Edit"	AppendMenuA DROP
+(*
+  CreatePopupMenu >R
+ R@ MF_STRING cmdGO	Z" &Go\tF9"	AppendMenuA DROP
+ R@ MF_STRING cmdSTEP	Z" S&tep\tF7"	AppendMenuA DROP
+ R@ MF_STRING cmdOVER	Z" &Over\tF8"	AppendMenuA DROP
+ R@ MF_STRING cmdGOTO	Z" Go&to\tF4"	AppendMenuA DROP
+ R@ MF_STRING cmdOUT	Z" O&ut\tF6"	AppendMenuA DROP
+ R@ MF_STRING cmdFORTH	Z" &Forth"	AppendMenuA DROP
+ R@ MF_STRING cmdABORT	Z" &Abort"	AppendMenuA DROP
+ R@ MF_STRING cmdHEX	Z" &HEX"	AppendMenuA DROP
+ R@ MF_STRING cmdDEC	Z" &DECIMAL"	AppendMenuA DROP
+
+	R> R@  MF_POPUP ROT	Z" &Debug"	AppendMenuA  DROP
+
+ R@ MF_STRING cmdFIND	Z" &Search"	AppendMenuA DROP
+ R@ MF_STRING cmdTst	Z" &Tst"	AppendMenuA DROP
+*)
+
+ R>
+;
+
+ CREATE WWWCCC
+$50 L, \ .cbSize
+CS_HREDRAW CS_VREDRAW OR L, \ .style  
+
+ ' EditWndProc2 , \ .lpfnWndProc
+
+0 L, \ .cbClsExtra
+0 L, \ .cbWndExtra
+
+IMAGE-BASE , \ .hInstance
+$10027 , \ .hIcon
+$10005 , \ .hCursor
+
+COLOR_WINDOWFRAME  , \ .hbrBackground   \   WHITE_BRUSH GetStockObject
+
+IDM_MENU , \ .lpszMenuName
+
+EditKeyClassName , \ .lpszClassName
+$10027 , \ .hIconSm
+ HERE WWWCCC - WWWCCC L!
+
+ WWWCCC RegisterClassExA DROP
+
+CREATE MSG1  /MSG ALLOT
+
+: MESSAGELOOP
+  BEGIN	MSG1 0 0 0  GetMessageA
+  WHILE	MSG1 TranslateMessage DROP
+	MSG1 DispatchMessageA DROP
+  REPEAT
+;
+
+0 VALUE LOOPFLG
+
+: EDIT-GO
+  0
+  EditKeyClassName
+  DUP
+
+  WS_VISIBLE WS_OVERLAPPEDWINDOW OR
+  WS_CAPTION OR  WS_SYSMENU OR WS_THICKFRAME OR WS_MINIMIZEBOX OR
+  WS_MAXIMIZEBOX OR  WS_POPUP OR \ style
+
+  320   120
+  640   480
+  0
+  CreateMainMenu	\ handle to menu, or child-window identifier
+  IMAGE-BASE		\ handle to application instance
+  0			\ pointer to window-creation data
+
+   CreateWindowExA  TO WINID
+
+  EDIT_FN C@
+  IF	EDIT_LOAD
+	EDIT_XY 2@ NIP 0 EM_LINEINDEX  SendToEd EDIT_XY 2@ DROP + DUP
+	EM_SETSEL	SendToEd DROP
+	0 0 EM_SCROLLCARET SendToEd DROP
+  THEN
+
+  FALSE TO  EDIT-END
+   -1 TO LOOPFLG
+  MessageLoop
+
+   0 TO LOOPFLG
+
+;
+
+: TASK_EDIT \ RP@  444 - SP!
+[ $48 C, $81 C, $EC C,  $3000 L, ] \    subq    $0x18000,%rsp  
+  CALLBACKIN
+  DECIMAL
+  EDIT-GO
+ ;
+
+EXPORT \ ---------------------------------------
+
+: EDIT
+    EDIT-END
+    IF ['] TASK_EDIT TSTART DROP \  START_EDITED TSTART DROP
+    ELSE EDIT_Load  EDIT_XY 2@ EDIT_XY_SET
+    THEN 100 SLEEP ;
+
+1 [IF]
+: EDIT_ERROR ( ERR-NUM -> ) \ 
+  [ ' ERROR_DO >BODY @ COMPILE, ]
+  ERRFILENAME COUNT NIP \ cmdDBG ED_WATE <> AND
+  IF  NEXT_F  ERRFILENAME COUNT EDIT_FN!
+       ER>IN @ ERR-LINE @ 1- EDIT_XY!  EDIT
+  THEN
+;
+
+' EDIT_ERROR TO ERROR_DO
+[THEN]
+
+: E>   PARSE-NAME VIEWS_SEARCH ?DUP
+  IF  NEXT_F COUNT EDIT_FN! NAME>F 4 + L@ 0 SWAP EDIT_XY! EDIT  THEN  
+;
+
+: OK EDIT_FN COUNT INCLUDED ;
+
+\- CC_INIT  VARIABLE CC_INIT CC_INIT 0!
+\- CC_INITS CREATE   CC_INITS 8 , 0xFFFF ,
+
+[IFNDEF] InitControls
+: InitControls
+  CC_INIT @ IF EXIT THEN
+  CC_INITS InitCommonControlsEx DROP
+  Z" RICHED32.DLL" DLL_L DROP
+  TRUE CC_INIT !
+;
+[THEN]
+
+ InitControls
+
+
+;MODULE \ ---------------------------

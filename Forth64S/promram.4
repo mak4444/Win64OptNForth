@@ -1,0 +1,157 @@
+
+YDP @ 0= [IF] 0xf0000 ALLOCATE THROW DUP  YDP0 ! YDP ! [THEN]
+
+
+$1000000 VALUE FREE_size
+
+0 VALUE opt_hdr
+0 VALUE &opt_hdr_size
+$f0 VALUE opt_hdr_size
+\ $170 VALUE hdr_size
+0 VALUE &hdr_size
+$3AD VALUE itbl \ D0
+0 VALUE &itbl \ D0
+$3c VALUE itbl_size
+0 VALUE &itbl_size
+
+$38F VALUE code_size
+-1 VALUE flat_sect_size
+$200000 VALUE flat_code_size
+$530 VALUE file_size
+0 VALUE SizeOfImage
+
+0 VALUE intbl_k
+0 VALUE dll_name_k
+0 VALUE iatbl_k	
+0 VALUE intbl
+
+0 VALUE intbl
+0 VALUE dll_name
+0 VALUE iatbl
+0 VALUE intbl
+
+0 VALUE &ENTRYCODE
+
+0 VALUE &FLATSIZE
+0 VALUE CODE_BEGIN
+0 VALUE &CODESIZE
+0 VALUE &FORTHSIZE
+0 VALUE EXE-HEADER
+0 VALUE EXE-HEADER-END
+
+\ 0 VALUE USE-OPTIMIZER
+
+ALSO TC DEFINITIONS
+
+
+YDP @ 0= [IF] 0xf0000 ALLOCATE THROW DUP  YDP0 ! YDP ! [THEN]
+
+0 VALUE FORTH-END
+
+\- THS> : THS> POSTPONE \ ;
+
+4 ALIGN-BYTES !
+-1 TO OPTVALNEED
+
+' //.DO TO //.
+' GTYPE TO VGTYPE
+
+   1 TO YDP_FL
+
+0x30000 TO CODE-SIZE
+
+HERE S" lst" S", TO  C"_AL"
+
+HERE T-DP !
+CODE-SIZE  ALLOCATE THROW
+  TO MSTR_IMG
+  MSTR_IMG DP !
+
+
+$b504	'FGLOB  SEG: .global
+
+'FSIZE	'FSTART	SEG: .forth
+$4000	IATBL	SEG: .idata
+
+
+: TSAVE (  ADDR LEN -- )
+  R/W CREATE-FILE THROW >R
+ ." TS="
+  .forth $14 + DUP H. .forth M@ DUP H. T> OVER -  DUP H.  R@ WRITE-FILE THROW cr
+
+  R> CLOSE-FILE THROW 
+;
+
+8 ALIGN-BYTES !
+HERE MSTR_IMG - TO CODE-SIZE
+
+
+ ' THERE?A TO THERE?
+
+
+\ S" Forth64S/src/GHEADERS.4"  THS_CREATE
+S" ForthSrc\GHEADERS.4TH"  THS_CREATE
+
+ ' INCLUDED_AL TO G_INCLUDED
+\ ' INCLUDED TO G_INCLUDED
+THS> .( VIEW_S)
+
+.global	SEG_SET
+
+S" ForthSrc\" INPUT_PATH $!
+S" Forth64S/src/" OUTPUT_PATH $!
+
+.forth	SEG_SET
+$44 toMM_SIZE
+
+ S" stub.4" GINCLUDED
+ HERE TO CODE_BEGIN
+ S" imporot.4" G_INCLUDED
+
+ S" src_PRIMITIVES.4" GINCLUDED
+
+ S" src_VARS.4" GINCLUDED
+
+ S" src_HPROC.4" GINCLUDED
+
+ S" macroopt.4" GINCLUDED
+\ S" noopt.f" GINCLUDED
+
+ S" NUMB_PARSE_IO.4" GINCLUDED
+
+ S" LITERAL.4" GINCLUDED
+
+ S" src_FIND_INTERP.4" GINCLUDED
+
+ S" _mak/CompIF1.4"   GINCLUDED
+
+ S" TERM/INCLUDE.4" GINCLUDED
+ S" fstart.4" GINCLUDED
+(*
+
+*)
+ S" main.4" G_INCLUDED
+
+THS::
+THS_CLOSE 
+
+ S" GHEADERS.4TH" G_INCLUDED
+  COUNT_SEG_CLOSE
+
+.forth M@ CODE_BEGIN - &FLATSIZE L!
+\  .forth M@ 'FSTART - DUP &FLATSIZE L!
+.forth M@ 'FSTART - FREE_size +  SizeOfImage  L!
+
+.forth M@ CODE_BEGIN - FREE_size + 
+ mcr .( CODESIZE=) dup mh. &CODESIZE L!
+ mcr .( TLINK=) TLINK mh.
+ TLINK FORTH-WORDLIST !
+ HERE DP !
+
+ mcr .( TVIEWLINK=)
+TVIEWLINK  dup mh. ' VIEW_LINK >BODY  dup mh.  !
+
+  S" Forth64.exe" TSAVE 
+  BYE
+
+\EOF

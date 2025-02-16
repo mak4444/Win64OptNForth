@@ -1,0 +1,64 @@
+
+: TITLE CR
+  ." ANS FORTH 94" CR
+  ." A.Cherezov  http://www.forth.org.ru/" CR
+  ." M.Maksimov  https://github.com/mak4444"  CR
+;
+
+
+: COMMANDLINE ( -- ADDR LEN )
+  COMMAND_LINE
+
+  BEGIN 1+ DUP C@ BL U<= UNTIL
+   ZCOUNT \ ASCIIZ>
+;
+
+
+: FSTART
+
+  SP@ SP0 !
+  RP@ RP0 !
+
+
+\  ORIGVIEWLINK TO VIEW_LINK
+
+
+  [']  INCLUDED TO  ^INCLUDED
+
+$400 TO /SYSPAD
+HERE DUP TO SYSPADBUFF TO SYSPAD
+/SYSPAD ALLOT
+HERE TO SYSPADEDGE
+
+
+ COMMANDLINE ?DUP
+   IF ['] EVALUATE CATCH    ?DUP
+    IF 	ERROR_DO \ ['] ERROR CATCH
+      \ IF 4 HALT THEN
+    THEN
+   ELSE DROP  TITLE
+   THEN
+
+  MAIN_CYCLE
+;
+
+: WORDS0
+  CONTEXT @ @
+ BEGIN DUP
+ WHILE DUP ID. SPACE CDR
+ REPEAT DROP ;
+
+VARIABLE loaded_image
+VARIABLE IOVolume
+VARIABLE &VOLUME
+
+: FMAIN \  DP !
+    ." Forth run" CR
+FSTART
+;
+
+
+\EOF
+77 CONSTANT SSS SSS .
+: XXX 666 . ; XXX
+
