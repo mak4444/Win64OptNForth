@@ -4,6 +4,7 @@ REQUIRE $!  ~mak/place.f
 REQUIRE CASE lib/ext/case.f
 REQUIRE NUMBER? ~mak/lib/fpcnum.f
 REQUIRE MODULE: lib/ext/spf_modules.f
+REQUIRE NEAR_NFA ~mak\NEARNFA.4TH
 
 \- U>D 0 CONSTANT U>D
 \- M@ : M@ @ ;
