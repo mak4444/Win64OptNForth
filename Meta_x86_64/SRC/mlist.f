@@ -1,5 +1,7 @@
 REQUIRE PLACE  ~mak\place.f 
 REQUIRE [IF] ~MAK\CompIF4.f
+REQUIRE MODULE: lib/ext/spf_modules.f
+
 [IFNDEF] BREAK : BREAK  POSTPONE EXIT POSTPONE THEN ; IMMEDIATE  [THEN]
 
 [IFDEF]  STREAM-FILE
@@ -66,10 +68,28 @@ SHERE-TAB SHERE-TAB-CUR !
 
 80 VALUE DUMP_MAX 
 
+[IFNDEF] ?.NAME>S
+: G_?.NAME>S      ( CFA -- )
+\ ELIMINATE " 0x"
+\	DUP ADDR_OFF + H.  \ 1 H.R>S SSPACE
+	NEAR_NFA 
+	>R DUP
+	IF  DUP MCOUNT GTYPE 
+	     NAME>  R> - DUP
+	     IF   DUP ." +0x" NEGATE H. \ >S
+	     THEN DROP
+\+ 'FSTART	ELSE   DROP  ." sssfimg+0x" R> 'FSTART - H.-
+\- 'FSTART	ELSE   DROP   R>  H.-
+	THEN ;
+
+DEFER ?.NAME>S
+' G_?.NAME>S  TO ?.NAME>S
+[THEN]
+
 : AHH.  ( adr u -- adr+ )
 
    DUP  'FGLOB - 0xFFFF U<
-  IF	G_?.NAME>S
+  IF	?.NAME>S
   BREAK
 
 	." 0x"
