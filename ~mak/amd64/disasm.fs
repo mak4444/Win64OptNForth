@@ -11,6 +11,8 @@ REQUIRE NUMBER? ~mak/lib/fpcnum.f
 
 REQUIRE CASE lib/ext/case.f
 
+REQUIRE NEAR_NFA ~mak\NEARNFA.4TH
+
 [IFNDEF] \+
 : \+    POSTPONE [DEFINED] 0= IF POSTPONE \ THEN ; IMMEDIATE
 : \-    POSTPONE [DEFINED]    IF POSTPONE \ THEN ; IMMEDIATE
@@ -20,12 +22,10 @@ REQUIRE CASE lib/ext/case.f
 \- HEX. : HEX. H. ;
 \- \G : \G POSTPONE \ ; IMMEDIATE
 
-[IFNDEF] :NONAME
-: :NONAME ( C: -- colon-sys ) ( S: -- xt ) \ 94 CORE EXT
-  LATEST ?DUP IF 1+ C@ C-SMUDGE C! SMUDGE THEN
-  HERE DUP TO LAST-NON [COMPILE] ]
-;
-[THEN]      
+\- LAST-NON 0 VALUE LAST-NON
+\- :NONAME : :NONAME ( C: -- colon-sys ) ( S: -- xt ) \ 94 CORE EXT
+\- :NONAME  HERE DUP TO LAST-NON [COMPILE] ] ;
+
 \- endif : endif POSTPONE THEN ; IMMEDIATE
 \- 2, : 2, , , ;
 \- DEFER : DEFER VECT ;
@@ -50,7 +50,7 @@ REQUIRE CASE lib/ext/case.f
 [THEN]      
 
 
-: D# BASE @ >R DECIMAL PARSE-WORD EVALUATE R> BASE ! ;  IMMEDIATE
+: D# BASE @ >R DECIMAL PARSE-NAME EVALUATE R> BASE ! ;  IMMEDIATE
 \- BOUNDS : BOUNDS OVER + SWAP ;
 \- #TAB 9 CONSTANT  #TAB
 \- ," : ," '"' PARSE S", ;
@@ -620,15 +620,15 @@ FE FE T, .GRP4 "                F8 F8 T, .STCL "
 : .386   .LENGTH OFF  .ALENGTH OFF LEN! ;
 : .AMD64 .386 .AMD64MODE ON ;
 
+ BASE !
+
+ALSO FORTH DEFINITIONS
+
 : INST  ( ADR -- ADR' )
   DUP CR ." ( "  HEX. ." ) "
   DUP .CODE \ disline
   DUP TAB ." \ "  ROT  ?DO	I C@ HEX.  LOOP
 ;
-
- BASE !
-
-ALSO FORTH DEFINITIONS
 
 : DISLINE ( ip -- ip' )
     DUP .LFORMAT TAB .CODE  ;
@@ -646,6 +646,35 @@ ALSO FORTH DEFINITIONS
 ;
 
 \+ DISCODE ' DISASM IS DISCODE
+
+0 VALUE NEXT-INST
+VARIABLE  COUNT-LINE
+
+: REST          ( ADR -- )
+                20    COUNT-LINE !
+\+ MAX_REFERENCE       0 TO MAX_REFERENCE
+                DUP TO NEXT-INST
+                BEGIN
+                        CR
+                        NEXT-INST C@
+                        DUP  0xC3 <> 
+                        SWAP 0xE9 <> AND    \ NEXT, BEHIND US?
+\+ MAX_REFERENCE          NEXT-INST MAX_REFERENCE U< OR
+                        OVER THERE - 0x100 U> AND
+                WHILE   INST
+                        COUNT-LINE @ 1- DUP 0=  \ SEE-KET-FL AND
+                           IF 9 EMIT ." \ Press <enter> | q | any" KEY UPC
+                            DUP   0xD = IF 2DROP 1  ELSE
+                              DUP [CHAR] Q = SWAP 0x1B =
+                              OR IF  2DROP CR EXIT    THEN
+                                DROP 20    THEN
+                           THEN
+                        COUNT-LINE !
+                REPEAT  DROP ." END-CODE  "
+                ;
+
+: SEE       ( -- )
+            ' REST ;
 
 PREVIOUS PREVIOUS
 
