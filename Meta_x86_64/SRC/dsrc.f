@@ -143,9 +143,12 @@ VECT MINST
 
 REQUIRE 'NOOP	Meta_x86_64/SRC/forward.f
 \ REQUIRE DISARM		Meta_x86_64/SRC/disgasm64.4
- REQUIRE DISARM		Meta_x86_64/SRC/disfasm.4th
+\ REQUIRE DISARM		Meta_x86_64/SRC/disfasm.4th
 \ REQUIRE DISARM		~mak/gasm64/disgasm.4
-' SMINST TO MINST
+REQUIRE SMINST ~mak/amd64/disasm.fs 
+
+' INST TO MINST
+\+ SMINST ' SMINST TO MINST
 
 REQUIRE INCLUDED_AL	Meta_x86_64/SRC/mlist.f 
 
