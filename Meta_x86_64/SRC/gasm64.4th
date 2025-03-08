@@ -46,9 +46,9 @@ REQUIRE MODULE: lib/ext/spf_modules.f
 	?DUP IF ROT >R 1- RECURSE  R>  THEN ;
 [THEN]
 
-0 VALUE TEXEC_?
-: TEXEC_SET  -1 TO TEXEC_? ;
-: TEXEC_DIS  0 TO TEXEC_? ;
+\-  TEXEC_?  0 VALUE TEXEC_?
+\- TEXEC_SET  : TEXEC_SET  -1 TO TEXEC_? ;
+\- TEXEC_? : TEXEC_DIS  0 TO TEXEC_? ;
 \- .S  : .S ( -- )    DEPTH .SN ;
 
 \- 3DUP : 3DUP DUP 2OVER ROT ;
