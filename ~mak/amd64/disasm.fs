@@ -4,8 +4,12 @@
 \ You should have received a copy of the GNU General Public License
 \ along with this program. If not, see http://www.gnu.org/licenses/.
 
+\ This file is part of Gforth.
 \
 \ amd disassembler loadscreen                         19may97py
+
+REQUIRE [IF] ~mak/CompIF3.f
+REQUIRE [IFNDEF] ~nn/lib/ifdef.f
 
 REQUIRE NUMBER? ~mak/lib/fpcnum.f
 
