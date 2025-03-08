@@ -7,3 +7,5 @@ E> E> / f11 - hyperlink
 ---------------
 forth64.exe gui.4th
 
+
+![DBGTST.F - file tracing demo](img/debug.png)
