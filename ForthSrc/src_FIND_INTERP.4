@@ -673,6 +673,28 @@ T: CREATE	PARSE-NAME CREATED ;
 
 T: VARIABLE	CREATE 0 , ;
 
+VARIABLE USER-OFFS
+
+T: USER-ALLOT ( n -- )  USER-OFFS +! ;
+T: USER-HERE ( -- n )   USER-OFFS @ ;
+
+T: USER-ALIGNED ( -- a-addr n )
+   USER-HERE 7 + -8 AND DUP
+   USER-HERE -
+;
+
+: USER-CREATE ( "<spaces>name" -- )
+  HEADER
+  'USER-CODE COMPILE,
+  USER-ALIGNED
+  USER-ALLOT  L,
+;
+: USER ( "<spaces>name" -- )
+  USER-CREATE
+  8 USER-ALLOT
+;
+
+
 T: ->DEFER ( cfa -- )	HEADER 	&DOVECT @ COMPILE, , ;
 
 T: DEFER	( -- )  ['] CRASH  ->DEFER ;
@@ -896,3 +918,12 @@ T: IMMEDIATE
 ;
 
 VARIABLE EMITVAR
+: CHARS ;
+
+: _CMOVE>    ( from to length -- )
+		DUP 0> NOT IF   2DROP DROP EXIT THEN
+		1- CHARS 0 SWAP
+		DO   ( from to)
+			OVER I + C@ OVER I + C!
+		-1 \ CHARS
+		+LOOP 2DROP ;
