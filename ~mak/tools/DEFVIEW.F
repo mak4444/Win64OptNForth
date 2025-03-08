@@ -14,6 +14,7 @@ CREATE VIEW_FSTACK 0 , 0 , VIEW_FSTACK_SIZE ALLOT
   REPEAT @ NIP NIP
 ;
 
+(*
 : VIEW_SEARCHz. ( adr len -- nfa path | 0  )
   SNFAFIND
  DUP 0= IF BREAK
@@ -36,10 +37,9 @@ CREATE VIEW_FSTACK 0 , 0 , VIEW_FSTACK_SIZE ALLOT
  REPEAT
  NIP
 ;
+*)
 
-: VIEWS_SEARCH ( adr len -- nfa path | 0  )
-  SNFAFIND
- DUP 0= IF BREAK
+: NFA2PATH ( adr len -- nfa path | 0  )
   VIEW_LINK
  BEGIN  DUP WHILE
 	DUP CELL+ @
@@ -56,6 +56,12 @@ CREATE VIEW_FSTACK 0 , 0 , VIEW_FSTACK_SIZE ALLOT
 	@
  REPEAT
  NIP
+;
+
+: VIEWS_SEARCH ( adr len -- nfa path | 0  )
+  SNFAFIND
+ DUP 0= IF BREAK
+  NFA2PATH
 ;
 
 (
