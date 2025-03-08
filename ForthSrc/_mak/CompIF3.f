@@ -32,9 +32,9 @@ REQUIRE CHAR-UPPERCASE ~ac/lib/string/uppercase.f
       IF  
          2DUP   S" \"  CEQUAL-U   IF 2DROP POSTPONE \	ELSE 
          2DUP   S" COMMENT:"  CEQUAL-U   IF 2DROP POSTPONE COMMENT:	ELSE 
-         2DUP   S" (*"  CEQUAL-U   IF 2DROP POSTPONE (*	ELSE 
+         2DUP   S" (*"  CEQUAL-U >IN @ 3 = AND IF 2DROP POSTPONE (*	ELSE 
          2DUP 3 UMIN
-  S" [IF"  \ �� ᫮�� � ��䨪ᮬ "[IF"
+  S" [IF"  \ a2e1a5 ᫮a2a0 e1 afe0a5䨪ᮬ "[IF"
             CEQUAL-U  IF 2DROP 1+                 ELSE 
          2DUP S" [else]" CEQUAL-U  IF 2DROP 1- DUP  IF 1+ THEN ELSE 
               S" [then]" CEQUAL-U  IF       1-                 THEN
