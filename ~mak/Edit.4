@@ -1,8 +1,10 @@
+REQUIRE [IF] ~mak/CompIF4.f
+REQUIRE [IFNDEF] ~nn/lib/ifdef.f
+
 YDP @ 0= [IF] 0xf0000 ALLOCATE THROW DUP  YDP0 ! YDP ! [THEN]
--1 TO YDP_FL
+\ -1 TO YDP_FL
  REQUIRE MODULE: lib/ext/spf_modules.f
  REQUIRE CASE-INS lib\ext\caseins.f
-~mak\gasm64\gasm64.4 
 
 REQUIRE WAPI_2: lib\WAPI.4
 REQUIRE [IFNDEF] _nn\lib\ifdef.f
@@ -12,7 +14,7 @@ REQUIRE (*	~af\lib\comments.f \ *)
 REQUIRE OFD_STR ~mak\fdialog.4 
 REQUIRE FILE-SIZE ~mak/lib/ftools.4 
 
-REQUIRE ENS-CASE ~mak\case.f
+REQUIRE END-CASE ~mak\case.f
 REQUIRE NEAR_NFA ~mak\NEARNFA.4TH
 REQUIRE VIEWS_SEARCH ~mak/tools/DEFVIEW.F
 ~mak\EditAPI.4 
@@ -82,58 +84,35 @@ CONSTANT /MSG
 \- LOWORD : LOWORD ( lpar -- loword ) 0x0FFFF AND ;
 \- HIWORD : HIWORD ( lpar -- hiword ) 0x10000 /  ;
 
-MODULE: EDIT-MOD \ -------------------------------------------
-
-0 VALUE EdHWnd
-0 VALUE WINID
-
-\- EditKeyClassName : EditKeyClassName S" SP-FORTH EditKey" DROP ;
-
 1 4 LSHIFT CONSTANT MAX#ED_FN
 
 0 VALUE #ED_FN
+0 VALUE EdHWnd
+0 VALUE EDWINID
 
 CREATE EDIT_FN_B 0x101	 MAX#ED_FN * ALLOT
 CREATE EDIT_SL_B 2 CELLS MAX#ED_FN * ALLOT
 
-: EDIT_FN	EDIT_FN_B #ED_FN 0x101	* + ;
-: EDIT_SL	EDIT_SL_B #ED_FN 2 CELLS * + ;
-
-TRUE VALUE EDIT-END
-
-0 VALUE Content
-0 VALUE SizeEd
-
-
-: SendToEd ( lParam wParam Msg -- u )
-  EdHWnd SWAP 2SWAP  SendMessageA
- ;
-
-: 0SendToEd ( Msg -- )
-  EdHWnd SWAP  0 0  SendMessageA DROP ;
-
-
-: EDIT_FN!  ( ADDR LEN -- )
-	EDIT_FN $!
-	EDIT_FN COUNT + 0! ;
-
-VARIABLE EDIT_XY  0 ,
-
-: EDIT_XY!  EDIT_XY 2! ;
-
-: EDIT_SEL	(  bb ee -- )
-	EM_SETSEL SendToEd DROP
-	0 0 EM_SCROLLCARET SendToEd DROP
-;
+: SendToEd ( lParam wParam Msg -- u ) 
+ EdHWnd
+\  EDWINID
+ SWAP 2SWAP  SendMessageA ;
 
 : EDIT_SEL_GET { \ bb ee -- bb ee }
   ^ bb ^ ee  EM_GETSEL  SendToEd DROP
   bb ee
 ;
 
+: EDIT_FN	EDIT_FN_B #ED_FN 0x101	* + ;
+: EDIT_SL	EDIT_SL_B #ED_FN 2 CELLS * + ;
+
 : NEXT_F EDIT_SEL_GET EDIT_SL 2!
          #ED_FN 1+ MAX#ED_FN 1- AND TO #ED_FN ;
 : LAST_F #ED_FN 1- MAX#ED_FN 1- AND TO #ED_FN ;
+
+: EDIT_FN!  ( ADDR LEN -- )
+	EDIT_FN $!
+	EDIT_FN COUNT + 0! ;
 
 : PUSH-WINDOW ( hwnd -- prev-hwnd)
 	DUP	SetActiveWindow >R
@@ -143,6 +122,11 @@ VARIABLE EDIT_XY  0 ,
 	R>
 ;
 
+: EDIT_SEL	(  bb ee -- )
+	EM_SETSEL SendToEd DROP
+	0 0 EM_SCROLLCARET SendToEd DROP
+;
+
 :  EDIT_SCROLL  ( yy -- )
    6 +
 	0 0 EM_GETLINECOUNT SendToEd 1- MIN
@@ -150,6 +134,45 @@ VARIABLE EDIT_XY  0 ,
   EM_LINEINDEX   SendToEd DUP
   EDIT_SEL
 ;
+
+: EDIT_Y_SET { yy -- }
+   yy  EDIT_SCROLL
+   yy    0 EM_LINEINDEX   SendToEd
+   yy 1+ 0 EM_LINEINDEX   SendToEd
+   EM_SETSEL       SendToEd DROP
+   EdHWnd
+\   EDWINID
+   PUSH-WINDOW DROP
+;
+
+: EDIT_Y_GET  0 -1 EM_LINEFROMCHAR SendToEd ;
+
+TRUE VALUE ED_WATE
+DEFER F4_ED   ' NOOP TO F4_ED
+DEFER F6_ED   ' NOOP TO F6_ED
+DEFER F7_ED   ' NOOP TO F7_ED
+DEFER F8_ED   ' NOOP TO F8_ED
+DEFER F9_ED   ' NOOP TO F9_ED
+
+MODULE: EDIT-MOD \ -------------------------------------------
+
+
+\- EditKeyClassName : EditKeyClassName S" SP-FORTH EditKey" DROP ;
+
+
+TRUE VALUE EDIT-END
+
+0 VALUE Content
+0 VALUE SizeEd
+
+: 0SendToEd ( Msg -- )
+  EdHWnd SWAP  0 0  SendMessageA DROP ;
+
+
+
+VARIABLE EDIT_XY  0 ,
+
+: EDIT_XY!  EDIT_XY 2! ;
 
 : EDIT_XY_SET { xx yy -- }
   yy  EDIT_SCROLL
@@ -174,7 +197,7 @@ VARIABLE EDIT_XY  0 ,
 	0 0 WM_GETTEXTLENGTH SendToEd DROP
 	0 0 WM_SETCURSOR     SendToEd DROP
 
-	WINID EDIT_FN 1+  SetWindowTextA DROP
+	EDWINID EDIT_FN 1+  SetWindowTextA DROP
 
 	Content FREE DROP \ THROW
 	THEN
@@ -291,13 +314,13 @@ VARIABLE VXY CELL ALLOT
 	 CASE
 		VK_F2  OF EDIT_FN COUNT ['] EDIT_Save CATCH DROP ENDOF
 		VK_F3  OF 	ENDOF
-		VK_F4  OF 	ENDOF
-		VK_F6  OF 	ENDOF
-		VK_F7  OF 	ENDOF
-		VK_F8  OF 	ENDOF
-		VK_F9  OF 	ENDOF
-        VK_F11 OF ['] FIND_DO_F11 CATCH DROP	ENDOF
-	    VK_F12 OF LAST_F EDIT_Load  EDIT_SL 2@ EDIT_SEL ENDOF
+		VK_F4  OF F4_ED  cmdDBG TO ED_WATE	ENDOF
+		VK_F6  OF F6_ED  cmdDBG TO ED_WATE	ENDOF
+		VK_F7  OF F7_ED  cmdDBG TO ED_WATE	ENDOF
+		VK_F8  OF F8_ED  cmdDBG TO ED_WATE	ENDOF
+		VK_F9  OF F9_ED  cmdDBG TO ED_WATE	ENDOF
+		VK_F11 OF ['] FIND_DO_F11 CATCH DROP	ENDOF
+		VK_F12 OF LAST_F EDIT_Load  EDIT_SL 2@ EDIT_SEL ENDOF
 		EdWndProc hwnd msg wpar lpar CallWindowProcA  -> res
 	ENDCASE
   endof	EdWndProc hwnd msg wpar lpar CallWindowProcA  -> res
@@ -331,24 +354,24 @@ WNDPROC: MyEdWndProc
 	cmdRestore	OF  EDIT_Load
 		ENDOF
 
-	cmdBYE  	OF 0 0 WM_CLOSE   WINID SendMessageA DROP ENDOF
+	cmdBYE  	OF 0 0 WM_CLOSE   EDWINID SendMessageA DROP ENDOF
 	cmdCUT  	OF WM_CUT   0SendToEd ENDOF
 	cmdCOPY 	OF WM_COPY  0SendToEd ENDOF
 	cmdPASTE	OF WM_PASTE 0SendToEd ENDOF
 \	cmdFIND 	OF FindStruct FindTextA  FindHWND ! ENDOF
-(*
-	cmdGOTO   OF F4_EDIT cmdDBG TO ED_WATE  ENDOF
-	cmdOUT    OF F6_EDIT cmdDBG TO ED_WATE  ENDOF
-	cmdSTEP   OF F7_EDIT cmdDBG TO ED_WATE  ENDOF
-	cmdOVER   OF F8_EDIT cmdDBG TO ED_WATE  ENDOF
-	cmdGO     OF F9_EDIT cmdDBG TO ED_WATE  ENDOF
+
+	cmdGOTO   OF F4_ED cmdDBG TO ED_WATE  ENDOF
+	cmdOUT    OF F6_ED cmdDBG TO ED_WATE  ENDOF
+	cmdSTEP   OF F7_ED cmdDBG TO ED_WATE  ENDOF
+	cmdOVER   OF F8_ED cmdDBG TO ED_WATE  ENDOF
+	cmdGO     OF F9_ED cmdDBG TO ED_WATE  ENDOF
 	cmdFORTH  OF     cmdFORTH   TO ED_WATE  ENDOF
 	cmdABORT  OF     cmdABORT   TO ED_WATE  ENDOF
 	cmdHEX    OF     cmdHEX     TO ED_WATE  ENDOF
 	cmdDEC    OF     cmdDEC     TO ED_WATE  ENDOF
 
 	cmdTst      OF ENDOF
-*)
+
     ENDCASE
 ;
 
@@ -407,7 +430,7 @@ WNDPROC: MyEdWndProc
    ENDOF    \ 2  
 
    WM_SETFOCUS OF
-\      WINID SetFocus DROP
+\      EDWINID SetFocus DROP
       EdHWnd SetFocus DROP
 \	hwnd msg wpar lpar DefWindowProcA -> res
    ENDOF   \ 3
@@ -449,7 +472,7 @@ CREATE EEFF   $55555555 ,
  R@ MF_STRING cmdPASTE	Z" &Paste"	AppendMenuA DROP
 
 	R> R@  MF_POPUP ROT	Z" &Edit"	AppendMenuA DROP
-(*
+
   CreatePopupMenu >R
  R@ MF_STRING cmdGO	Z" &Go\tF9"	AppendMenuA DROP
  R@ MF_STRING cmdSTEP	Z" S&tep\tF7"	AppendMenuA DROP
@@ -465,7 +488,7 @@ CREATE EEFF   $55555555 ,
 
  R@ MF_STRING cmdFIND	Z" &Search"	AppendMenuA DROP
  R@ MF_STRING cmdTst	Z" &Tst"	AppendMenuA DROP
-*)
+
 
  R>
 ;
@@ -520,7 +543,7 @@ CREATE MSG1  /MSG ALLOT
   IMAGE-BASE		\ handle to application instance
   0			\ pointer to window-creation data
 
-   CreateWindowExA  TO WINID
+   CreateWindowExA  TO EDWINID
 
   EDIT_FN C@
   IF	EDIT_LOAD
