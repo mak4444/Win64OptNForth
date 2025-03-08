@@ -1,0 +1,112 @@
+VFXCODE 1.E
+       FLD1
+       RET
+END-CODE
+
+
+VFXCODE F10*   \ *
+       MOV  DWORD -8 [RBP], # 0AH
+       FIMUL  DWORD -8 [RBP]
+       RET
+END-CODE
+
+VFXCODE F10/   \ *
+       MOV  DWORD -8 [RBP], # 0AH
+       FIDIV  DWORD -8 [RBP]
+       RET
+END-CODE
+
+VFXCODE F>ENV ( addr -- )
+       FSTENV 0 [RAX]
+       MOV RAX, 0 [RBP]
+       LEA RBP, 8 [RBP]
+       RET
+END-CODE
+
+
+VFXCODE FDEPTH  \ *
+       LEA RBP, -8 [RBP]
+       MOV 0 [RBP], RAX
+       FSTSW RAX
+       SHR  RAX, # 0BH
+       AND  RAX, # 7
+       NZ, if,
+         NEG  RAX
+         LEA  RAX, 8 [RAX]
+       then,
+	RET
+END-CODE
+
+VFXCODE F+      \   DE C1
+       FADDP ST(1), ST
+       RET
+END-CODE
+
+VFXCODE F!
+       FSTP  QWORD 0 [RAX]
+       MOV   RAX, 0 [RBP]
+       LEA   RBP, 8 [RBP]
+       RET
+END-CODE
+
+
+VFXCODE F@
+       FLD  QWORD 0 [RAX]
+       MOV   RAX, 0 [RBP]
+       LEA   RBP, 8 [RBP]
+       RET
+END-CODE
+
+VFXCODE FNEGATE  \ *
+       FCHS
+       RET
+END-CODE
+
+
+VFXCODE .E
+       FLDZ
+       RET
+END-CODE
+
+VFXCODE S>F
+      	MOV -8 [RBP], RAX      	
+        FILD QWORD -8 [RBP]
+       MOV   RAX, 0 [RBP]
+       LEA   RBP, 8 [RBP]
+
+       RET
+END-CODE
+
+VFXCODE GETFPUSW  ( -- u )     \ *
+     	LEA RBP, -8 [RBP]
+      	MOV 0 [RBP], RAX
+        FSTSW AX
+
+       RET
+END-CODE
+
+VFXCODE SETFPUCW  ( u -- )
+      	MOV -8 [RBP], RAX
+        FLDCW -8 [RBP]
+     	MOV RAX, 0 [RBP]
+      	LEA RBP, 8 [RBP]
+
+       RET
+END-CODE
+
+VFXCODE GETFPUCW ( -- u )     \ *
+      	LEA RBP, -8 [RBP]
+        FSTCW 0 [RBP]
+     	XCHG RAX, 0 [RBP]
+       RET
+END-CODE
+
+VFXCODE UP-MODE
+        FSTCW -8 [RBP]
+       BTR   DWORD -8 [RBP],  0Ah
+       BTS   DWORD -8 [RBP],  0Bh
+        FLDCW -8 [RBP]
+
+       RET
+END-CODE
+
