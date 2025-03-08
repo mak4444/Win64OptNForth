@@ -4,6 +4,10 @@ REQUIRE $!  ~mak/place.f
 REQUIRE CASE lib/ext/case.f
 REQUIRE NUMBER? ~mak/lib/fpcnum.f
 
+\- LAST-NON 0 VALUE LAST-NON
+\- RECURSE : RECURSE \ Compile a call to the current (not yet finished) definition.
+\- RECURSE	LAST @ NAME> LAST-NON UMAX COMPILE, ; IMMEDIATE
+
 \- DEFER : DEFER VECT ;
 
 \- U>D 0 CONSTANT U>D
