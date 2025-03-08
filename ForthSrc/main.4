@@ -1,9 +1,8 @@
 
 HERE  TIMAGE-BASE - &ENTRYCODE L!
 GASM_BIG
-	$48 c, $83 c, $F0E4 W,              \   and rsp, 0xFFFF_FFFF_FFFF_FFF0
-	$48 c, $89 c, $E5 c,                  \   mov rbp, rsp
-	
+	andq    $-0x10,%rsp     \ A0DEB7 48 83 E4 F0
+        mov     %rsp,%rbp       \ A0DEBB 48 89 E5	
         sub    $0x20,%rsp
         mov    $-0xB,%rcx
         call   'GetStdHandle  (%rip)
@@ -20,7 +19,10 @@ GASM_BIG
         add    $0x20,%rsp
         mov     %rax,  ' H-STDIN >BODY   (%rip)
 	mov    $ HERE FREE_size + -0xF ALSO FORTH AND [P] ,%rbp \ stack
-
+	lea    -0x1000 (%rbp), %r13
+        mov     USER-OFFS (%rip) , %rbx
+	sub	%rbx,%r13
 	JMP  ' FMAIN
+
 
 END-CODE
