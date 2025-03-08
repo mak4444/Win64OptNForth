@@ -29,19 +29,20 @@ CREATE test3331
 
 \ Push the address of the top element of the return stack 
 \ onto the parameter stack.
-CODE RP@	(  -- addr )
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	lea    0x8(%rsp),%rax
-	NEXT
+VFXCODE RP@	(  -- addr )
+	LEA    RBP, -8 [RBP]
+	MOV   0 [RBP], RAX
+	LEA    RAX, 8 [RSP]
+	NEXT,
 END-CODE
 
 
-CODE	DROP	\ remove element of parameter stack .
+VFXCODE	DROP	\ remove element of parameter stack .
 CODL	D>S
+\+ null-op null-op	
 	DROP,
 CODL	NOOP
-	NEXT
+	NEXT,
 END-CODE
 
 ' NOOP TO 'CRASH
@@ -49,310 +50,324 @@ END-CODE
 ' DROP TO 'DROP
 
 \ Set the return stack pointer to n .
-CODE RP!	( N -- )
-	pop    %rbx
-	mov    %rax,%rsp
-	mov    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
-	jmp	%rbx
+VFXCODE RP!	( N -- )
+	POP     RBX
+	MOV     RSP, RAX
+	MOV     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
+	JMP     RBX \ unnecessary REX.W
 END-CODE
 
-CODE 2RDROP
-	mov	(%rsp),%rbx
-	lea	0x18(%rsp),%rsp
-	jmp	%rbx
+VFXCODE 2RDROP
+	MOV     RBX, 0 [RSP]
+	LEA     RSP, 18h [RSP]
+	JMP     RBX
 END-CODE
 
 \ Pop two items from return stack onto parameter stack
-CODE 2R>	( -- D.lo D.hi )
-	mov    (%rsp),%rbx
-	mov    %rax,-0x8(%rbp)
-	mov    0x10(%rsp),%rcx
-	mov    0x8(%rsp),%rax
-	mov    %rcx,-0x10(%rbp)
-	lea    -0x10(%rbp),%rbp
-	lea    0x18(%rsp),%rsp
-	jmp	%rbx
+VFXCODE 2R>	( -- D.lo D.hi )
+	MOV     RBX, 0 [RSP]
+	MOV     -8 [RBP], RAX
+	MOV     RCX, 10H [RSP]
+	MOV     RAX,  08 [RSP]
+	MOV     -10H [RBP], RCX
+	LEA     RBP, -10H [RBP]
+	LEA     RSP,  18H [RSP]
+	JMP     RBX
 END-CODE
 
 
 \ Push a copy of the top two items of the return stack onto the parameter stack.
-CODE 2R@	( -- D.lo D.hi )
-	mov    %rax,-0x8(%rbp)
-	mov    0x8(%rsp),%rax
-	mov    0x10(%rsp),%rbx
-	mov    %rbx,-0x10(%rbp)
-	lea    -0x10(%rbp),%rbp
+VFXCODE 2R@	( -- D.lo D.hi )
+	MOV     -8 [RBP], RAX
+	MOV     RAX, 8 [RSP]
+	MOV     RBX, 10H [RSP]
+	MOV     -10H [RBP], RBX
+	LEA     RBP, -10H [RBP]
 	NEXT
 END-CODE
 
-
 \ Pop two items from parameter stack, push onto return stack.
-CODE 2>R	( D -- )
-	pop    %rbx
-	push   0(%rbp)
-	push   %rax
-	lea    0x10(%rbp),%rbp
-	mov    -0x8(%rbp),%rax
-	jmp	%rbx
+VFXCODE 2>R	( D -- )
+	POP     RBX
+	PUSH    QWORD 0 [RBP]
+	PUSH    RAX
+	LEA     RBP, 10H [RBP]
+	MOV     RAX, -8 [RBP]
+	JMP     RBX
 END-CODE
 
-CODE SP@	( -- N )
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	mov    %rbp,%rax
+VFXCODE SP@	( -- N )
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, RBP
 	NEXT
 END-CODE
 
 \ Set the parameter stack pointer to specified value.
-CODE SP!	( n -- )
-	lea    0x8(%rax),%rbp
-	mov    -0x8(%rbp),%rax
+VFXCODE SP!	( n -- )
+	LEA     RBP, 8 [RAX]
+	MOV     RAX, -8 [RBP]
 	NEXT
 END-CODE
 
-CODE PERFORM	( ... [tx] -- ...' )
+VFXCODE PERFORM	( ... [tx] -- ...' )
 CODL @EXECUTE
-	mov    (%rax),%rax
+	MOV     RAX, 0 [RAX]
 \ Execute the word whose CFA is on the stack
 CODL EXECUTE	( ... tx -- ...' )
-	mov    %rax,%rdx
-	mov    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
-	jmp    %rdx
+	MOV     RDX, RAX
+	MOV     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
+	JMP     RDX
 END-CODE
 
 ' PERFORM TO 'PERFORM
 ' EXECUTE TO 'EXECUTE
 
-CODE SL@
-	mov    (%rax),%eax
-	cltq
+VFXCODE SL@
+	MOV     EAX, 0 [RAX]
+	CDQE
 	NEXT
 END-CODE
 
-CODE L@
-	mov    (%rax),%eax
+VFXCODE L@
+	MOV     EAX, 0 [RAX]
 	NEXT
 END-CODE
 
 \ ARM Forth word @   ( addr -- n )
 \ Fetch a value from addr
-CODE @		( A -- N )
-	mov    (%rax),%rax
+VFXCODE @		( A -- N )
+	MOV     RAX, 0 [RAX]
 	NEXT
 END-CODE
 
 ' @ TO 'GET
 
-CODE C@		( A -- c )
-	movzbl (%rax),%eax
+VFXCODE C@		( A -- c )
+	MOVZX   EAX, Byte 0 [RAX]
 	NEXT
 END-CODE
 
-CODE W@		( A -- c )
-	movzwl (%rax),%eax
+VFXCODE W@		( A -- c )
+	MOVZX   EAX, Word 0 [RAX]
 	NEXT
 END-CODE
 
 \ Store the least significant 8 bits of char at the specified addr
-CODE C!		( N,A -- )
-	mov    0x0(%rbp),%dl
-	mov    %dl,(%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE C!		( N,A -- )
+	MOV     DL, 0 [RBP]
+	MOV     byte 0 [RAX], DL
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE W!	( N,A -- )
-	mov    0x0(%rbp),%edx
-	mov    %dx,(%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE W!	( N,A -- )
+	MOV     EDX, 0 [RBP]
+	MOV     0 [RAX], DX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE L!	( N,A -- )
-	mov    0x0(%rbp),%edx
-	mov    %edx,(%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE L!	( N,A -- )
+	MOV     EDX, 0 [RBP]
+	MOV     0 [RAX], EDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
 \  Store value n into the address addr
-CODE !	( N,A -- )
-	mov    0x0(%rbp),%rdx
-	mov    %rdx,(%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE !	( N,A -- )
+	MOV     RDX, 0 [RBP]
+	MOV     0 [RAX], RDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE +!		( N,A -- )
-	mov    0x0(%rbp),%rdx
-	add	%rdx, (%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE +!		( N,A -- )
+	MOV     RDX, 0 [RBP]
+	ADD     0 [RAX], RDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE C+!		( N,A -- )
-	mov    0x0(%rbp),%rdx
-	add	%dl, (%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE C+!		( N,A -- )
+	MOV     RDX, 0 [RBP]
+	ADD     byte 0 [RAX], DL
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE L+!		( N,A -- )
-	mov    0x0(%rbp),%rdx
-	add	%edx, (%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE L+!		( N,A -- )
+	MOV     RDX, 0 [RBP]
+	ADD     0 [RAX], EDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE LOR!		( N,A -- )
-	mov    0x0(%rbp),%rdx
-	or	%edx, (%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE LOR!		( N,A -- )
+	MOV     RDX, 0 [RBP]
+	OR      0 [RAX], EDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE OR!		( N,A -- )
-	mov    0x0(%rbp),%rdx
-	or	%Rdx, (%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE OR!		( N,A -- )
+	MOV     RDX, 0 [RBP]
+	OR      0 [RAX], RDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE XOR!		( N,A -- )
-	mov    0x0(%rbp),%rdx
-	xor	%Rdx, (%rax)
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE XOR!		( N,A -- )
+	MOV     RDX, 0 [RBP]
+	XOR      0 [RAX], RDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE 1+!	( N A -- )
-	incq   (%rax)
-	mov    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE 1+!	( N A -- )
+	INC     QWord 0 [RAX]
+	MOV     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 \ [A] = 0
-CODE 0!		( A -- )
+VFXCODE 0!		( A -- )
 CODL OFF		( A -- )
-	movq   $0,(%rax)
+	MOV     QWord 0 [RAX], # 0
+\+ null-op null-op	
 	DROP,
 	NEXT
 END-CODE
 
-CODE ON		( A -- )
-	movq   $-1,(%rax)
+VFXCODE ON		( A -- )
+	MOV     QWord 0 [RAX], # -1
+\+ null-op null-op	
 	DROP,
 	NEXT
 END-CODE
 
 \  Fetch a 64 bit value from addr
-CODE 2@		( addr -- low32bits high32bits )
-	mov 8(%rax), %rdx
-	lea -8(%rbp), %rbp
-	mov %rdx, (%rbp)
-	mov (%rax), %rax
+VFXCODE 2@		( addr -- low32bits high32bits )
+	MOV     RDX, 8 [RAX]
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RDX
+	MOV     RAX, 0 [RAX]
 
 	NEXT
 END-CODE
 
-CODE 2!		( D A -- )
-	mov (%rbp), %rdx
-	mov %rdx, (%rax)
-	mov 8(%rbp), %rdx
-     	mov %rdx, 8(%rax)
-	mov 0x10(%rbp), %rax
-	lea 0x18(%rbp),%rbp
+VFXCODE 2!		( D A -- )
+	MOV     RDX, 0 [RBP]
+	MOV     0 [RAX], RDX
+	MOV     RDX, 8 [RBP]
+	MOV     8 [RAX], RDX
+	MOV     RAX, 10H [RBP]
+	LEA     RBP, 18H [RBP]
 	NEXT
 END-CODE
 
 
-CODE COUNT	( a -- a+1 c ) 
-	lea    -0x8(%rbp),%rbp
-	lea    0x1(%rax),%rdx
-	movzbq (%rax),%rax
-	mov    %rdx,0x0(%rbp)
+VFXCODE COUNT	( a -- a+1 c ) 
+	LEA     RBP, -8 [RBP]
+	LEA     RDX,  1 [RAX]
+	MOVZX   RAX, Byte 0 [RAX]
+	MOV     0 [RBP], RDX
 	NEXT
 END-CODE
 
-CODE U>D
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	xor    %rax,%rax
+VFXCODE U>D
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	XOR     RAX, RAX
 	NEXT
 END-CODE
 
-CODE S>D
-	DUP,
-	sar    $0x3f,%rax
+VFXCODE S>D
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX	 \ DUP,
+	SAR     RAX, # 3FH
 	NEXT
 END-CODE
 
-CODE C>S ( c -- n )
-	movsbq	%al,%rax
+VFXCODE C>S ( c -- n )
+	MOVSX   RAX, AL
 	NEXT
 END-CODE
 
-CODE W>S ( c -- n )
-	movswq %ax,%rax
+VFXCODE W>S ( c -- n )
+	MOVSX   RAX, AX
 	NEXT
 END-CODE
 
-CODE L>S ( c -- n )
-	movslq %eax,%rax
+VFXCODE L>S ( c -- n )
+	MOVSXD  RAX, EAX
 	NEXT
 END-CODE
 
-CODE MIN	( N1,N2 -- MIN )
-	cmp    0x0(%rbp),%rax
-	cmovg  0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE MIN	( N1,N2 -- MIN )
+	CMP     RAX, 0 [RBP]
+	CMOVNLE  RAX, 0  [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-CODE UMIN	( N1,N2 -- MIN )
-	cmp    0x0(%rbp),%rax
-	cmova  0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE UMIN	( N1,N2 -- MIN )
+	CMP     RAX, 0 [RBP]
+	CMOVNBE  RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-CODE MAX	( N1,N2 -- MAX )
-	cmp    0x0(%rbp),%rax
-	cmovl  0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE MAX	( N1,N2 -- MAX )
+	CMP     RAX, 0 [RBP]
+	CMOVL   RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 \ ÌÀÊÑÈÌÓÌ
-CODE UMAX	( N1,N2 -- MAX )
-	cmp    0x0(%rbp),%rax
-	cmovb  0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE UMAX	( N1,N2 -- MAX )
+	CMP     RAX, 0 [RBP]
+	CMOVB   RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 \ Return absolute value of top stack item
-CODE ABS	( n -- +n )
-	cqto
-	xor %rdx, %rax
-	sub %rdx, %rax
+VFXCODE ABS	( n -- +n )
+	CQO
+	XOR     RAX, RDX
+	SUB     RAX, RDX
 	NEXT
 ASM_END
 
+1 [IF]
 \  If n1 is equal to n2, return TRUE. Otherwise FALSE.
+VFXCODE =		( a b -- f )
+\  If n is equal to 0, return TRUE. Otherwise FALSE.
+	XOR     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
+CODL 0=		( a -- f )
+     	SUB     RAX, # 01
+     	SBB     RAX, RAX
+
+	NEXT
+END-CODE
+[ELSE]
 CODE =		( a b -- f )
 \  If n is equal to 0, return TRUE. Otherwise FALSE.
 	xor    0x0(%rbp),%rax
@@ -363,450 +378,473 @@ CODL 0=		( a -- f )
 
 	NEXT
 END-CODE
+[THEN]
 
 ' =	TO '=
 
-CODE  D= ( xd1 xd2 -- flag ) \ 94 DOUBLE
+VFXCODE  D= ( xd1 xd2 -- flag ) \ 94 DOUBLE
 \ flag is true if and only if xd1 is bit-for-bit the same as xd2
-	mov    (%rbp),%rdx
-	xor    8(%rbp),%rax
-	xor    0x10(%rbp),%rdx
-	or     %rdx,%rax
-	sub    $0x1,%rax
-	sbb    %rax,%rax
-	lea    0x18(%rbp),%rbp
+	MOV     RDX, 0 [RBP]
+	XOR     RAX, 8 [RBP]
+	XOR     RDX, 10H [RBP]
+	OR      RAX, RDX
+	SUB     RAX, # 01
+	SBB     RAX, RAX
+	LEA     RBP, 18H [RBP]
 	NEXT
 END-CODE
 
-CODE D0=		( a b -- f )
-	or     0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
-	sub    $0x1,%rax
-	sbb    %rax,%rax
+VFXCODE D0=		( a b -- f )
+	OR      RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
+	SUB     RAX, # 01
+	SBB     RAX, RAX
 	NEXT
 END-CODE
 
-CODE >		( a b -- f )
-	cmp	(%rbp),%rax
-	setl	%al
-	neg	%al
-	movsb	%al,%rax
-	lea	8(%rbp),%rbp
+VFXCODE >		( a b -- f )
+	CMP     RAX, 0 [RBP]
+	SETL	AL
+	NEG     AL
+	MOVSX   RAX, AL
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-CODE <		( a b -- f )
-	cmp	(%rbp),%rax
-	setg	%al
-	neg	%al
-	movsb	%al,%rax
-	lea	8(%rbp),%rbp
+VFXCODE <		( a b -- f )
+	CMP     RAX, 0 [RBP]
+	SETNLE	AL
+	NEG     AL
+	MOVSX   RAX, AL
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 \ If n1 is not equal to n2, return TRUE.  Otherwise FALSE.
-CODE <>		( a b -- f )
-	xor    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE <>		( a b -- f )
+	XOR     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 \ If n is not equal to 0, return TRUE.  Otherwise FALSE.
 CODL 0<>		( a b -- f )
-	neg    %rax
-	sbb    %rax,%rax
+	NEG     RAX
+	SBB     RAX, RAX
 	NEXT
 END-CODE
 
-CODE 0>		( n -- f )
-	neg    %rax
+VFXCODE 0>		( n -- f )
+	NEG     RAX
 \ Returns true if top is negative, ie sign bit is on.
 CODL 0<		( n -- f )
-	sar    $0x3f,%rax
+	SAR     RAX, # 3FH
 	NEXT
 END-CODE
 
-CODE U>	( n1 n2 -- f )
-	cmp    0x0(%rbp),%rax
-	sbb    %rax,%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE U>	( n1 n2 -- f )
+	CMP     RAX, 0 [RBP]
+	SBB     RAX, RAX
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-CODE U< ( a b -- f )
-	cmp    %rax,0x0(%rbp)
-	sbb    %rax,%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE U< ( a b -- f )
+	CMP     0 [RBP], RAX
+	SBB     RAX, RAX
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-CODE WITHIN
-	mov    0x8(%rbp),%rdx
-	sub    0x0(%rbp),%rax
-	sub    0x0(%rbp),%rdx
-	sub    %rax,%rdx
-	sbb    %rax,%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE WITHIN
+	MOV     RDX, 8 [RBP]
+	SUB     RAX, 0 [RBP]
+	SUB     RDX, 0 [RBP]
+	SUB     RDX, RAX
+	SBB     RAX, RAX
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE ANDC	( N1,N2 -- N )
-	not    %rax
+VFXCODE ANDC	( N1,N2 -- N )
+	NOT     RAX
 \ Perform bit-wise logical AND of top two items.
 CODL AND	( N1,N2 -- N )
-	and    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+	AND     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 
 \ Perform bit-wise logical OR of top two items on parameter stack.
-CODE OR		( N1,N2 -- N )
-	or     0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE OR		( N1,N2 -- N )
+	OR      RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 \ Perform bit-wise logical XOR of top two items on parameter stack.
-CODE XOR	( N1,N2 -- N )
-	xor	0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+VFXCODE XOR	( N1,N2 -- N )
+	XOR      RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 
 
 \ Logically invert the bits of top stack item.
-CODE INVERT	( N -- N1 )
+VFXCODE INVERT	( N -- N1 )
 CODL NOT	( N -- N1 )
-	not    %rax
+	NOT     RAX
 	NEXT
 ASM_END
 
 \ Negate number on top of stack.
-CODE NEGATE	( n - -n)
-	neg    %rax
+VFXCODE NEGATE	( n - -n)
+	NEG     RAX
 	NEXT
 ASM_END
 
-CODE DNEGATE ( d - -d)
-	mov    0x0(%rbp),%rdx
-	neg    %rax
-	neg    %rdx
-     	sbb    $0x0,%rax \ $48 C, $83 C, $d8 C, $00 C, \
-	mov    %rdx,0x0(%rbp)
+VFXCODE DNEGATE ( d - -d)
+	MOV     RDX, 0 [RBP]
+	NEG     RAX
+	NEG     RDX
+	SBB     RAX, # 00
+        MOV     0 [RBP], RDX
 	NEXT
 ASM_END
 
-CODE -		( N1,N2 -- N1-N2 )
-	neg    %rax
+VFXCODE -		( N1,N2 -- N1-N2 )
+	NEG     RAX
 CODL +		( N1 N2 -- N1+N2 )
-	add    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
+	ADD     RAX, 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 ' + TO '+
 
-CODE D+ ( d1|ud1 d2|ud2 -- d3|ud3 ) \ 94 DOUBLE
-	mov    0x0(%rbp),%rdx
-	add    %rdx,0x10(%rbp)
-	adc    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+VFXCODE D+ ( d1|ud1 d2|ud2 -- d3|ud3 ) \ 94 DOUBLE
+	MOV     RDX, 0 [RBP]
+	ADD     10H [RBP], RDX
+	ADC     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 ASM_END
 
 
-CODE D- ( d1|ud1 d2|ud2 -- d3|ud3 ) \ 94 DOUBLE
-	mov    (%rbp),%rdx
-	sub    %rdx,0x10(%rbp)
-	mov    8(%rbp),%rdx
-	sbb    %rax,%rdx
-	mov    %rdx,%rax
-	lea	0x10(%rbp),%rbp
+VFXCODE D- ( d1|ud1 d2|ud2 -- d3|ud3 ) \ 94 DOUBLE
+	MOV     RDX, 0 [RBP]
+	SUB     10H [RBP], RDX
+	MOV     RDX, 0 [RBP]
+	SBB     RDX, RAX
+	MOV     RAX, RDX
+	LEA     RBP, 10H [RBP]
 	NEXT
 ASM_END
 
-CODE D< ( d1 d2 -- flg ) \ 94 DOUBLE
-	mov    (%rbp),%rdx
-	cmp    %rdx,0x10(%rbp)
-	sbb    %rax,0x8(%rbp)
-	setl   %al
-	neg    %al
-	movsbq %al,%rax
-	lea	0x18(%rbp),%rbp
+VFXCODE D< ( d1 d2 -- flg ) \ 94 DOUBLE
+	MOV     RDX, 0 [RBP]
+	CMP     10H [RBP], RDX
+	SBB     8 [RBP], RAX
+	SETL	AL
+	NEG     AL
+	MOVSX   RAX, AL
+	LEA     RBP, 18H [RBP]
 	NEXT
 ASM_END
 
-CODE D2/ \ d1 -- d1/2
-	sar    %rax
-	$48 C, $d1 C, $5d C, 0 C, \ rcrq   0x0(%rbp)
+VFXCODE D2/ \ d1 -- d1/2
+	SAR     RAX, # 1
+	RCR     QWord 0 [RBP], # 1
 	NEXT
 ASM_END
 
-CODE CELL+	( N -- N+8 )
-	lea    4(%rax),%rax
+VFXCODE CELL+	( N -- N+8 )
+	LEA     RAX, 4 [RAX]
 CODL 4+		( N -- N+4 )
-	inc    %rax
+	INC     RAX
 CODL 3+		( N -- N+2 )
-	inc    %rax
+	INC     RAX
 CODL 2+		( N -- N+2 )
-	inc    %rax
+	INC     RAX
 CODL 1+		( N -- N+1 )
 CODL CHAR+
-	inc    %rax
+	INC     RAX
 	NEXT
 END-CODE
 \ 4 TR> DECIMAL 1+ .
 
-CODE CELL-	( N -- N-8 )
-	lea    -4(%rax),%rax
+VFXCODE CELL-	( N -- N-8 )
+	LEA     RAX, -4 [RAX]
 CODL 4-		( N -- N+4 )
-	lea    -2(%rax),%rax
+	LEA     RAX, -2 [RAX]
 CODL 2-		( N -- N-2 )
-	dec    %rax
+	DEC     RAX
 CODL 1-		( N -- N-1 )
-	dec    %rax
+	DEC     RAX
 	NEXT
 END-CODE
 
-CODE CELLS	( N -- 8*N )
-	lea    (%rax,%rax,1),%rax
+VFXCODE CELLS	( N -- 8*N )
+	LEA     RAX, 0 [RAX] [RAX]
 CODL 4*	( N -- 4*N )
-	lea    (%rax,%rax,1),%rax
+	LEA     RAX, 0 [RAX] [RAX]
 CODL 2*		( N -- 2*N )
-	lea    (%rax,%rax,1),%rax
+	LEA     RAX, 0 [RAX] [RAX]
 	NEXT
 END-CODE
 
-CODE 2/		( N -- N/2 )
-	sar    %rax
+VFXCODE 2/		( N -- N/2 )
+	SAR     RAX, # 1
 	NEXT
 END-CODE
 
-CODE U2/        ( N -- N/U2 )
-	shr    %rax
+VFXCODE U2/        ( N -- N/U2 )
+	SHR     RAX, # 1
         NEXT
 END-CODE
 
 \ 32*32=lo(32)
-CODE *		( a b -- a*b )
-	imulq  0x0(%rbp)
-	lea    0x8(%rbp),%rbp
+VFXCODE *		( a b -- a*b )
+	IMUL    QWord 0 [RBP]
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-CODE /
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rax
-	cqto
-	idiv   %rcx
-	lea    0x8(%rbp),%rbp
+VFXCODE /
+	MOV     RCX, RAX
+	MOV     RAX, 0 [RBP]
+	CQO
+	IDIV    RCX
+	LEA     RBP, 8 [RBP]
 	NEXT
 ASM_END
 
-CODE MOD
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rax
-	cqto
-	idiv   %rcx
-	lea    0x8(%rbp),%rbp
-	mov    %rdx,%rax
+VFXCODE MOD
+	MOV     RCX, RAX
+	MOV     RAX, 0 [RBP]
+	CQO
+	IDIV    RCX
+	LEA     RBP, 8 [RBP]
+	MOV     RAX, RDX
 	NEXT
 ASM_END
 
 
-CODE U/
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rax
-	xor    %rdx,%rdx
-	lea    0x8(%rbp),%rbp
-	div    %rcx
+VFXCODE U/
+	MOV     RCX, RAX
+	MOV     RAX, 0 [RBP]
+	XOR     RDX, RDX
+	LEA     RBP, 8 [RBP]
+	DIV     RCX
 	NEXT
 ASM_END
 
-CODE UM*
-	mulq   0x0(%rbp)
-	mov    %rax,0x0(%rbp)
-	mov    %rdx,%rax
+VFXCODE UM*
+	MUL     QWord 0 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, RDX
 	NEXT
 ASM_END
 
-CODE M*
-     	imulq  0x0(%rbp)
-	mov    %rax,0x0(%rbp)
-	mov    %rdx,%rax
+VFXCODE M*
+	IMUL     QWord 0 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, RDX
 	NEXT
 ASM_END
 
-CODE /MOD ( n1 n2 -- rem quot )
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rax
-	cqto
-	idiv   %rcx
-	mov    %rdx,0x0(%rbp)
+VFXCODE /MOD ( n1 n2 -- rem quot )
+	MOV     RCX, RAX
+	MOV     RAX, 0 [RBP]
+	CQO
+	IDIV    RCX
+	MOV     0 [RBP], RDX
 	NEXT
 ASM_END
 
-CODE UM/MOD
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rdx
-	mov    0x8(%rbp),%rax
-	div    %rcx
-	lea    0x8(%rbp),%rbp
-	mov    %rdx,0x0(%rbp)
+VFXCODE UM/MOD
+	MOV     RCX, RAX
+	MOV     RDX, 0 [RBP]
+	MOV     RAX, 8 [RBP]
+	DIV     RCX
+	LEA     RBP, 8 [RBP]
+	MOV     0 [RBP], RDX
 	NEXT
 ASM_END
 
 \ duplicate n1 if <> 0
-CODE ?DUP	( N -- N,N )  ( 0 -- 0 )
-     	test     %rax,%rax
-	je	0f
+VFXCODE ?DUP	( N -- N,N )  ( 0 -- 0 )
+     	TEST    RAX, RAX
+	NZ, if,
 CODL DUP	( N -- N,N )  \ Duplicate the top element of the stack.
-	DUP,
-0:	NEXT
+	 LEA     RBP, -8 [RBP]
+	 MOV     0 [RBP], RAX
+	then,
+	NEXT
 ASM_END
+
 \ END-CODE
 ' DUP TO 'DUP
 
 \ Duplicate double element of data stack.
-CODE 2DUP	(  a b -- a b a b )
-	mov    0x0(%rbp),%rdx
-	mov    %rax,-0x8(%rbp)
-	mov    %rdx,-0x10(%rbp)
-	lea    -0x10(%rbp),%rbp
+VFXCODE 2DUP	(  a b -- a b a b )
+	MOV     RDX, 0 [RBP]
+	MOV     -8 [RBP], RAX
+	MOV     -10H [RBP], RDX
+	LEA     RBP, -10H [RBP]
 	NEXT
 END-CODE
 
 \ Exchange the top two items on the stack
-CODE SWAP	( N1,N2 -- N2,N1 )
-	mov    0x0(%rbp),%rdx
-	mov    %rax,0x0(%rbp)
-	mov    %rdx,%rax
+VFXCODE SWAP	( N1,N2 -- N2,N1 )
+	MOV     RDX, 0 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, RDX
 	NEXT
 END-CODE
 
-CODE CS-SWAP
-	nop
+VFXCODE CS-SWAP
+	NOP
 \ Swap double element of data stack.
 CODL 2SWAP	( n1 n2  n3 n4 -- n3 n4  n1 n2 )
-	mov    0x0(%rbp),%rcx
-	mov    0x8(%rbp),%rdx
-	mov    0x10(%rbp),%rbx
-	mov    %rcx,0x10(%rbp)
-	mov    %rax,0x8(%rbp)
-	mov    %rbx,0x0(%rbp)
-	mov    %rdx,%rax
+	MOV     RCX, 0 [RBP]
+	MOV     RDX, 8 [RBP]
+	MOV     RBX, 10H [RBP]
+	MOV     10H [RBP], RCX
+	MOV     8 [RBP], RAX
+	MOV     0 [RBP], RBX
+	MOV     RAX, RDX
 	NEXT
 END-CODE
 
 \ Remove double element of data stack.
-CODE CS-DROP
-	nop
+VFXCODE CS-DROP
+	NOP
 CODL 2DROP  	( D -- )
-	mov    0x8(%rbp),%rax
-	lea    0x10(%rbp),%rbp
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, 10H [RBP]
 	NEXT
 END-CODE
 
-CODE CS-PICK  ( xu .. x0 u -- xu .. x0 xu )
-	lea    (%rax,%rax),%rax
-	mov    8(%rbp,%rax,8),%rdx
-	lea	-0x08(%rbp),%rbp
-	mov	%rdx,(%rbp)
-	mov    8(%rbp,%rax,8),%rax
-	ret
+VFXCODE CS-PICK  ( xu .. x0 u -- xu .. x0 xu )
+	LEA     RAX, 0 [RAX] [RAX]
+	MOV     RDX, 8 [RAX*8] [RBP]  \ !!!!!!!
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RDX
+	MOV     RAX, 8 [RAX*8]
+	NEXT
 END-CODE
 
-CODE 2NIP	( D -- )
-	mov    (%rbp),%rdx
-	lea    0x10(%rbp),%rbp
-	mov    %rdx,(%rbp)
+VFXCODE 2NIP	( D -- )
+	MOV     RDX, 0 [RBP]
+	LEA     RBP, 10H [RBP]
+	MOV     0 [RBP], RDX
 	NEXT
 END-CODE
 
 \ Push a copy of the second stack item.
-CODE OVER	( n1 n2 -- n1 n2 n1 )
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	mov    0x8(%rbp),%rax
+VFXCODE OVER	( n1 n2 -- n1 n2 n1 )
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, 8 [RBP]
 	NEXT
 END-CODE
 
 ' OVER	TO 'OVER
 
-CODE 2OVER	( n1 n2 -- n1 n2 n1 )
-	mov 16(%rbp),%rdx
-	mov %rax,-8(%rbp)
-	mov %rdx,-16(%rbp)
-	mov 8(%rbp),%rax
-	lea -16(%rbp),%rbp
+VFXCODE 2OVER	( n1 n2 -- n1 n2 n1 )
+	MOV     RDX, 10H [RBP]
+	MOV     -8 [RBP], RAX
+	MOV     -10H [RBP], RDX
+	MOV     RAX, 8 [RBP]
+	LEA     RBP, -10H [RBP]
 	NEXT
 END-CODE
 
-
-
-CODE PICK	( Nm,...,N1,K -- Nm,...,N1,Nk )
-	mov    (%rbp,%rax,8),%rax
+VFXCODE PICK	( Nm,...,N1,K -- Nm,...,N1,Nk )
+	MOV     RAX, 0 [RBP] [RAX*8]
 	NEXT
 END-CODE
 
 \ CODE PLUCK	( N1 N2 N3 -- N1 N2 N3 N1 ) 
 \ Tuck the first element under the second one.
-CODE TUCK	( n1 n2 --- n2 n1 n2 )
-	lea    -0x8(%rbp),%rbp
-	mov    0x8(%rbp),%rdx
-	mov    %rax,0x8(%rbp)
-	mov    %rdx,0x0(%rbp)
+VFXCODE TUCK	( n1 n2 --- n2 n1 n2 )
+	LEA     RBP, -8 [RBP]
+	MOV     RDX, 8 [RBP]
+	MOV     8 [RBP], RAX
+	MOV     0 [RBP], RDX
 	NEXT
 END-CODE
 
-CODE ROLL          \ nn..n0 n -- nn-1..n0 nn
+VFXCODE ROLL          \ nn..n0 n -- nn-1..n0 nn
 \ *G Rotate the order of the top N stack items by one place such
 \ ** that the current top of stack becomes the second item and
 \ ** the Nth item becomes TOS. See also *\fo{ROT}.
-	test   %rax,%rax
-	je     1f
-	mov    %rax,%rcx
-	lea    (,%rax,8),%rax
-	mov    %rbp,%rdx
-	add    %rax,%rdx
-	mov    (%rdx),%rbx
-2:	lea    -8(%rdx),%rdx
-	mov    (%rdx),%rax
-	mov    %rax,8(%rdx)
-	dec    %rcx
-	jne    2b
-	mov    %rbx,%rax
-	jmp    3f
-1:	mov    (%rbp),%rax
-3:	lea    8(%rbp),%rbp
+
+	TEST    RAX, RAX
+	NZ, if,
+	  MOV     RCX, RAX
+	  LEA     RAX, 0 [RAX*8]
+	  MOV     RDX, RBP
+	  ADD     RDX, RAX
+	  MOV     RBX, 0 [RDX]
+	  begin,
+	    LEA     RDX, -8 [RDX]
+	    MOV     RAX, 0 [RDX]
+	    MOV     8 [RDX], RAX
+	    DEC     RCX
+	  Z, while,
+	    MOV     RAX, RBX
+	  repeat,
+	else,
+	  MOV     RAX, 0 [RBP]
+	then,
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
-
-
 \ Delete the second stack item.
-CODE NIP	( n1 n2 -- n2 )
-	lea    0x8(%rbp),%rbp
+VFXCODE NIP	( n1 n2 -- n2 )
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 \ Rotate top three stack values, bringing the third item to the top.
-CODE ROT	( n1 n2 n3 -- n2 n3 n1 )
-	mov    0x0(%rbp),%rdx
-	mov    %rax,0x0(%rbp)
-	mov    0x8(%rbp),%rax
-	mov    %rdx,0x8(%rbp)
+VFXCODE ROT	( n1 n2 n3 -- n2 n3 n1 )
+	MOV     RDX, 0 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, 8 [RBP]
+	MOV     8 [RBP], RDX
 	NEXT
 END-CODE
 
 
 \ Rotate top three stack values, bringing the top item to the third.
-CODE -ROT	( n1 n2 n3 -- n3 n1 n2 )
-	mov    0x8(%rbp),%rdx
-	mov    %rax,0x8(%rbp)
-	mov    0x0(%rbp),%rax
-	mov    %rdx,0x0(%rbp)
+VFXCODE -ROT	( n1 n2 n3 -- n3 n1 n2 )
+	MOV     RDX, 8 [RBP]
+	MOV     8 [RBP], RAX
+	MOV     RAX, 0 [RBP]
+	MOV     0 [RBP], RDX
 	NEXT
 END-CODE
 
+10 [IF]
+VFXCODE ARSHIFT	( a b -- a>>b ) \ arithmetic shift
+	MOV     CL, AL
+	MOV     RAX, 0 [RBP]
+	SAR     RAX, CL
+	LEA     RBP, 8 [RBP]
+	NEXT
+END-CODE
+
+VFXCODE RSHIFT	( a b -- a>>b )
+CODL >>
+	MOV     CL, AL
+	MOV     RAX, 0 [RBP]
+	SHR     RAX, CL
+	LEA     RBP, 8 [RBP]
+	NEXT
+END-CODE
+
+[ELSE]
 
 CODE ARSHIFT	( a b -- a>>b ) \ arithmetic shift
 	mov    %al,%cl
@@ -825,51 +863,68 @@ CODL >>
 	NEXT
 END-CODE
 
+[THEN]
 
-CODE LSHIFT	( a b -- a<<b )
+
+VFXCODE LSHIFT	( a b -- a<<b )
 CODL <<
-	mov    %al,%cl
-	mov    0x0(%rbp),%rax
-	shl    %cl,%rax
-	lea    0x8(%rbp),%rbp
-
+	MOV     CL, AL
+	MOV     RAX, 0 [RBP]
+	SHL     RAX, CL
+	LEA     RBP, 8 [RBP]
 	NEXT
 END-CODE
 
 
-CODE TlsIndex!
-     	mov    %rax,%r12
-	' DROP BRANCH,
+VFXCODE TlsIndex!
+     	MOV     R13, RAX
+	JMP ' DROP \ BRANCH,
 END-CODE
 
-CODE TlsIndex@
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	mov	%r12, %rax
+VFXCODE TlsIndex@
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, R13
 	NEXT
 END-CODE
 
 
-CODE CDR
-     	mov    -8(%rax),%rax
+VFXCODE CDR
+     	MOV     RAX, -8 [RAX]
 	NEXT
 END-CODE
 
-CODE NAME>C
-	lea    -0x18(%rax),%rax
+VFXCODE NAME>C
+     	LEA     RAX, -18H [RAX]
 	NEXT
 END-CODE
 
-CODE NAME>
-	mov    -0x18(%rax),%rax
+VFXCODE NAME>
+     	MOV     RAX, -18H [RAX]
 	NEXT
 END-CODE
 
-CODE NAME>F
-	lea    -0x10(%rax),%rax
+VFXCODE NAME>F
+     	LEA     RAX, -10H [RAX]
 	NEXT
 END-CODE
 
+10 [IF]
+VFXCODE ERASE ( addr len  -- )
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX \ DUP
+	MOV     RAX, # 0
+CODL FILL ( addr len c -- )
+	MOV     RCX, 0 [RBP]
+	NCXZ, if,
+	  MOV     RDI, 8 [RBP]
+	  REP	STOSB
+	then,
+	MOV     RAX, 10h [RBP]
+	LEA     RBP, 18h [RBP]
+	NEXT
+END-CODE
+[ELSE]
 CODE ERASE ( addr len  -- )
 	DUP,
 	MOV	$0,%rax
@@ -882,224 +937,233 @@ CODL FILL ( addr len c -- )
 	lea    0x18(%rbp),%rbp
 	NEXT
 END-CODE
+[THEN]
 
-CODE CCMOVE>
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rdi
-	mov    0x8(%rbp),%rsi
-	std    
-	add    %rcx,%rdi
-	add    %rcx,%rsi
-	dec    %rsi
-	dec    %rdi
-	rep movsb \ %ds:(%rsi),%es:(%rdi)
-	cld    
-	lea    0x18(%rbp),%rbp
-	mov    -0x8(%rbp),%rax
+VFXCODE CCMOVE>
+	MOV     RCX, RAX
+	MOV     RDI, 0 [RBP]
+	MOV     RSI, 8 [RBP]
+	STD
+	ADD     RDI, RCX
+	ADD     RSI, RCX
+	DEC     RSI
+	DEC     RDI
 	NEXT
 END-CODE
 
-CODE CMOVE>
-        mov     0x08(%rbp),%rcx
-        mov     0x00(%rbp),%rdx
-        mov     %rax,%r8
-        lea     -0x08(%rcx,%rax,1),%rcx
-        lea     -0x08(%rdx,%rax,1),%rdx
-        shr     $0x03,%rax
-        jz      0f
-1:        mov     (%rcx),%rbx
-        sub    $0x01,%rax
-        lea     -0x08(%rcx),%rcx
-        mov     %rbx,(%rdx)
-        lea     -0x08(%rdx),%rdx
-        jNE     1b
-0:	mov     %r8,%rax
-        and    $0x07,%rax
-        lea     0x07(%rcx),%rcx
-        lea     0x07(%rdx),%rdx
-        jz      0f
-1:        mov     (%rcx),%bl
-        sub    $0x01,%rax
-        lea     -0x01(%rcx),%rcx
-        mov     %bl,(%rdx)
-        lea     -0x01(%rdx),%rdx
-        jNE     1b
-0:        mov     0x10(%rbp),%rax
-        lea     0x18(%rbp),%rbp
+VFXCODE CMOVE>
+        MOV     RCX, 8 [RBP]
+	MOV     RDX, 0 [RBP]
+	MOV     R8, RAX
+	LEA     RCX, -8 [RCX] [RAX]
+	LEA     RDX, -8 [RDX] [RAX]
+	SHR     RAX, # 03
+	NZ, if,
+	  begin,
+	    MOV     RBX, 0 [RCX]
+	    SUB     RAX, # 01
+	    LEA     RCX, -8 [RCX]
+	    MOV     0 [RDX], RBX
+	    LEA     RDX, -8 [RDX]
+	  Z, until,
+	then,
+	  MOV     RAX, R8
+	  AND     RAX, # 07
+	  LEA     RCX, 7 [RCX]
+	  LEA     RDX, 7 [RDX]
+	NZ, if,
+	  begin,
+	    MOV     BL, 0 [RCX]
+	    SUB     RAX, # 01
+	    LEA     RCX, -1 [RCX]
+	    MOV     0 [RDX], BL
+	    LEA     RDX, -1 [RDX]
+	  Z, until,
+	then,
+	MOV     RAX, 10H [RBP]
+        LEA     RBP, 18H [RBP]
 	NEXT
 END-CODE
 
-CODE CMOVE 
-	mov    %rax,%rcx
-	mov    0x0(%rbp),%rdi
-	mov    0x8(%rbp),%rsi
- 	cld    
-	rep movsb \ %ds:(%rsi),%es:(%rdi)
-	lea    0x18(%rbp),%rbp
- 	mov    -0x8(%rbp),%rax
+VFXCODE CMOVE 
+	MOV     RCX, RAX
+	MOV     RDI, 0 [RBP]
+	MOV     RSI, 8 [RBP]
+	CLD
+	REP	MOVSB
+	LEA     RBP, 18h [RBP]
+	MOV     RAX, -8 [RBP]
 	NEXT
 END-CODE
 
-CODE SKIP
-        mov     %rax,%rdx
-        mov     0x00(%rbp),%rcx
-        mov     0x08(%rbp),%rax
-1:      jrcxz	0f	
-        adc     $-0x76,%al
-        add     %bh,(%rcx,%rcx,1)
-        jNe     0f
-        mov     $0x14,%al
-0:        cmp     %dl,%al
-        jNe     0f
-        decq    %rcx
-        incq    %rax
-        jmp     1b
-0:      mov     %rax,0x08(%rbp)
-        mov     %rcx,%rax
-        lea     0x08(%rbp),%rbp
-        ret
+VFXCODE SKIP
+	MOV     RDX, RAX
+	MOV     RCX, 0 [RBP]
+	MOV     RAX, 8 [RBP]
+	begin,
+	   NCXZ, if,
+	    ADC     AL, # 8Ah
+	    ADD     0 [RCX] [RCX], DIL
+	    Z, if,
+	      MOV     AL, # 14h
+            then,  
+          then,  
+	  CMP     AL, DL
+	Z, while,
+	  DEC     RCX
+	  INC     RAX
+	repeat,
+	MOV     8 [RBP], RAX
+	MOV     RAX, RCX
+	LEA     RBP, 8 [RBP]
+
+	NEXT
 END-CODE
 
 
-CODE DOVALUE
-	nop
+VFXCODE DOVALUE
+	NOP
 CODL DOCONSTANT
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	pop    %rax
-	mov    (%rax),%rax
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	POP     RAX
+	MOV     RAX, 0 [RAX]
 	NEXT
 END-CODE
 
-CODE DOCREATE
-	lea    -0x8(%rbp),%rbp
-	mov    %rax,0x0(%rbp)
-	pop    %rax
+VFXCODE DOCREATE
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	POP     RAX
 	NEXT
 END-CODE
 
-CODE DOVECT
-	pop    %rbx
-	mov    (%rbx),%rbx
-	jmp	%rbx
+VFXCODE DOVECT
+	POP     RBX
+	MOV     RBX, 0 [RBX]
+	JMP     RBX
 END-CODE 
 
 CREATE &NOOP 'NOOP ,
 
-CODE (?DO) (  limit index -- )
-	cmp    0x0(%rbp),%rax	\ index = limit
-	je     0f
+vfxCODE (?DO) (  limit index -- )
+	CMP     RAX, 0 [RBP]	\ index = limit
+	NZ, if,
 CODL (DO) (  limit index -- )
-	pop    %rdx		\ rdx = return address
-	mov    (%rdx),%rcx	\ exit address
-	lea    0x8(%rdx),%rdx	\ step over it
-	push   %rcx		\ rcx = exit address  
-	push   %r15		\ r15 = old index - limit - msb
-	push   %r14		\ r14 = old index     
+	  POP     RDX		\ rdx = return address
+	  MOV     RCX, 0 [RDX]	\ exit address
+	  LEA     RDX, 8 [RDX]	\ step over it
+	  PUSH    RCX		\ rcx = exit address  
+	  PUSH    R15		\ r15 = old index - limit - msb
+	  PUSH    R14		\ r14 = old index     
 
-	mov    %rax,%r15	\ rbx = index, r15 = index                                     
-	sub    0x0(%rbp),%r15	\ r15 = index - limit 
-	btc    $0x3f,%r15	\ r15 = index - limit  - msb ; BTC=complement
-	mov    %rax,%r14 	\ r14 = index
+	  MOV     R15, RAX	\ rbx = index, r15 = index                                     
+	  SUB     R15, 0 [RBP]	\ r15 = index - limit 
+	  BTC     R15, 3Fh	\ r15 = index - limit  - msb ; BTC=complement
+	  MOV     R14, RAX 	\ r14 = index
 
-	mov    0x8(%rbp),%rax	\ restore TOS
-	lea    0x10(%rbp),%rbp	\ step data stack                               
+	  MOV     RAX, 8 [RBP]	\ restore TOS
+	  LEA     RBP, 10h [RBP] \ step data stack                               
 
-	jmp	%rdx
-0:	mov    0x8(%rbp),%rax	\ restore TOS
-	lea    0x10(%rbp),%rbp	\ step data stack
-	pop    %rdx		\ rdx = return address
-	mov    (%rdx),%rdx	\ exit address
-	jmp	%rdx
+	  JMP     RDX
+	then,
+	MOV     RAX, 8 [RBP]	\ restore TOS
+	LEA     RBP, 10h [RBP]	\ step data stack
+	POP     RDX		\ rdx = return address
+	MOV     RDX, 0 [RDX]	\ exit address
+	JMP     RDX
 END-CODE
 
 ' (?DO) TO '(?DO)
 ' (DO) TO '(DO)
 
-CODE LEAVE
+VFXCODE LEAVE
 \ RSP+18: ESP+C:  exit address
 \ RSP+10: ESP+8:  old index-limit-$8000.0000  (incremented by LOOP)
 \ RSP+08: ESP+4:  old index                   (incremented by LOOP)
 \ RSP+00: return address
 \ R15:    new index-limit-xorbit63
 \ R14:    new index
-        pop     %rdx	\ return address and discard it
-        pop	%r14	\ index
-        pop	%r15	\ index-limit-xorbit63
+        POP     RDX	\ return address and discard it
+        POP     R14	\ index
+        POP     R15	\ index-limit-xorbit63
 	NEXT
 END-CODE
 
 
-CODE UNLOOP
+VFXCODE UNLOOP
 \ RSP+18: ESP+C:  exit address
 \ RSP+10: ESP+8:  old index-limit-$8000.0000  (incremented by LOOP)
 \ RSP+08: ESP+4:  old index                   (incremented by LOOP)
 \ RSP+00: return address
 \ R15:    new index-limit-xorbit63
 \ R14:    new index
-        pop     %rdx	\ return address and discard it
-        pop	%r14	\ index
-        pop	%r15	\ index-limit-xorbit63
-	pop	%rcx
-	jmp	%rdx
+        POP     RDX	\ return address and discard it
+        POP     R14	\ index
+        POP     R15	\ index-limit-xorbit63
+	POP     RCX
+	JMP     RDX
 END-CODE
 
-CODE CALLBACKIN
-	mov     %r13,%rax
-        lea     0x2800(%rsp),%rbp
-	lea     0x200(%rsp),%r13
+VFXCODE CALLBACKIN
+	MOV     RAX, R13
+        LEA     RBP, 2800H [RSP]
+	LEA     R13, 200H [RSP]
         ret
 END-CODE
 
-CODE PARAM	
-        lea     -0x20(%rbp),%rbp
-        mov     %rax,0x18(%rbp)
-        mov     %rcx,0x10(%rbp)
-        mov     %rdx,0x08(%rbp)
-	mov     %r8,0x00(%rbp)
-	mov     %r9,%rax
+VFXCODE PARAM	
+	LEA     RBP, -20H [RBP]
+	MOV     18H [RBP], RAX
+	MOV     10H [RBP], RCX
+	MOV     8 [RBP], RDX
+	MOV     0 [RBP], R8
+	MOV     RAX, R9
         ret
 END-CODE
 
-CODE MARAP
-        mov     %rax,%r9
-        mov     0x00(%rbp),%r8
-        mov     0x08(%rbp),%rdx
-        mov     0x10(%rbp),%rcx
-        mov     0x18(%rbp),%rax
-        lea     0x20(%rbp),%rbp
+VFXCODE MARAP
+	MOV     R9, RAX
+	MOV     R8,  0 [RBP]
+	MOV     RDX, 8 [RBP]
+	MOV     RCX, 10H [RBP]
+	MOV     RAX, 18H [RBP]
+	LEA     RBP, 20H [RBP]
+
      ret
 END-CODE
 
-code LOCALS_EXIT
-        pop     %rbx
-        add     %rbx,%rsp
+VFXCODE LOCALS_EXIT
+        POP     RBX
+        ADD     RSP, RBX
         ret
 END-CODE
 
-CODE DOCREATE
-	DUP,
-	POP	%rax
+VFXCODE DOCREATE
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX	\ DUP,
+	POP     RAX
 	RET
 END-CODE
 
-CODE DOVALUE
+VFXCODE DOVALUE
 	NOP
 CODL DOCONSTANT
-	DUP,
-	POP	%rax
-	MOV	(%rax),%rax
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX	\ DUP,
+	POP     RAX
+	MOV     RAX, 0 [RAX]
 	RET
 END-CODE
 
-CODE DOVECT
-	POP	%rbx
-	JMP	(%rbx)
+VFXCODE DOVECT
+	POP     RBX
+	JMP     0 [RBX]
 END-CODE
 
-CODE DOFIELD
-	POP	%rbx
-	add	%rax,(%rbx)
+VFXCODE DOFIELD
+	POP     RBX
+	ADD     0 [RBX], RAX
 	RET
 END-CODE
 
@@ -1109,12 +1173,50 @@ END-CODE
 ' DOVECT TO 'DOVECT
 ' DOFIELD TO 'DOFIELD
 
+VFXCODE USER-CODE
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	POP     RAX
+	MOV     EAX, 0 [RAX]
+	ADD     RAX, R13
+	RET
+END-CODE
+
+' USER-CODE TO 'USER-CODE
+
 0 VALUE  H-STDIN    \ хэндл файла - стандартного ввода
 1 VALUE  H-STDOUT   \ хэндл файла - стандартного вывода
 1 VALUE  H-STDERR   \ хэндл файла - стандартного вывода ошибок
 
 
 VARIABLE KEY_BUF  0 , 0 , 0 ,
+10 [IF]
+VFXCODE OS_KEY
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	begin,
+	begin,
+	  MOV     RAX, # -1
+	  MOV     KEY_BUF [] , RAX
+	  PUSH    RSI
+	  SUB     RSP, # 30H
+	  MOV     RCX, ' H-STDIN >BODY []
+	  MOV     RDX, # KEY_BUF
+	  MOV     R8, # 1
+	  MOV     R9, # KEY_BUF 8 +
+	  MOV     QWord 20h [RSP], # 0
+	  CALL    'ReadConsoleInputA []    
+	  ADD     RSP, # 30h
+	  POP     RSI
+	  CMP     QWord KEY_BUF [] , # 01
+	NZ, until,
+	 MOVZX   RAX, Byte KEY_BUF 0eh + []
+	 TEST    RAX, RAX
+	NZ, until,
+	ret
+END-CODE
+
+[ELSE]
 
 CODE OS_KEY
         lea     -0x08(%rbp),%rbp
@@ -1138,6 +1240,7 @@ CODE OS_KEY
         jz      3B
 	ret
 END-CODE
+[THEN]
 
 VARIABLE EMIT_BUF
 
