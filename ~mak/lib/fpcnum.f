@@ -1,4 +1,4 @@
-REQUIRE [IF] ~mak\CompIF.f
+REQUIRE [IF] ~mak/CompIF3.f
 
 REQUIRE [IFNDEF] ~nn/lib/ifdef.f
 
