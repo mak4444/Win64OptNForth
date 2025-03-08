@@ -69,11 +69,11 @@ T: .R  ( n1 n -- ) \ 94 CORE EXT
  BASE @  >R HEX U.R
  R> BASE ! ;
 
+\ EOF
 : H.N           ( n1 n2 -- )    \ display n1 as a HEX number of n2 digits
                 BASE @ >R HEX >R
                 0 <# R> 0 ?DO # LOOP #> TYPE
                 R> BASE ! ;
-
 
 : H.H C@ 2 H.N SPACE ;
 \ : TAB 9 EMIT ;
