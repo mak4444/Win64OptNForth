@@ -1,4 +1,4 @@
-REQUIRE [IF] lib/include/tools.f
+REQUIRE [IF] ~mak/CompIF3.f
 
 C" [DEFINED]" FIND NIP 0=
 [IF]
