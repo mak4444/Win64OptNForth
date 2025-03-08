@@ -7,7 +7,7 @@ FORTH_SRC = Forth64S/promram.4 \
  ForthSrc/NUMB_PARSE_IO.4 \
  ForthSrc/LITERAL.4 \
  ForthSrc/src_FIND_INTERP.4 \
- ForthSrc/TERM/INCLUDE.4 \
+ ForthSrc/INCLUDE.4 \
  ForthSrc/fstart.4 \
  Meta_x86_64/SRC/gasm64.4th \
  Meta_x86_64/SRC/disfasm.4 \
