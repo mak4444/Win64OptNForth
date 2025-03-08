@@ -102,7 +102,7 @@
   не рекомендуется.
 )
 
-REQUIRE [IF] ~MAK\CompIF.f
+REQUIRE [IF] ~mak/CompIF4.f
 REQUIRE MODULE: lib/ext/spf_modules.f
 
 MODULE: vocLocalsSupport
@@ -299,12 +299,12 @@ EXPORT
     SWAP [CHAR] | = OR
     IF
       BEGIN
-        BL PSKIP PeekChar DUP 
+        BL PSKIP PEEKCHAR DUP 
          DUP [CHAR] - <> 
         SWAP [CHAR] } <>  AND
         SWAP [CHAR] ) XOR AND
       WHILE
-        PeekChar [CHAR] [ =
+        PEEKCHAR [CHAR] [ =
         IF  CreateLocArray  LocalsRecDoes@
         ELSE
              CREATE LATEST DUP C@ + C@
