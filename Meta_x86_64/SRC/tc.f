@@ -37,7 +37,7 @@ REQUIRE 'NOOP	Meta_x86_64/SRC/forward.f
     2swap + -rot			\ -- addr1+len addr2 addr2+len-1
     do  1- dup c@ i  c!  -1 +loop
     drop  exit
-  endif
+  THEN
   2drop drop
 ;
 
@@ -255,6 +255,35 @@ MODULE: TC
 : MVARIABLE VARIABLE ;
 : VARIABLE    ALIGN CREATE 1 CELLS  ALLOT ;
 : 2VARIABLE   ALIGN CREATE 2 CELLS  ALLOT ;
+
+MCREATE TUSER-OFFS 0 ,
+
+: USER-ALLOT ( n -- )
+  TUSER-OFFS +!
+;
+
+: USER-HERE ( -- n )
+  TUSER-OFFS @
+;
+
+
+: USER-ALIGNED ( -- a-addr n )
+   USER-HERE 7 + -8 AND DUP
+   USER-HERE -
+;
+
+: USER-CREATE ( "<spaces>name" -- )
+ :#THS
+  HEADER
+  'USER-CODE COMPILE,
+  USER-ALIGNED
+  USER-ALLOT  L,
+;
+: USER ( "<spaces>name" -- )
+  USER-CREATE
+  8 USER-ALLOT
+;
+
 
 : ?OLD
   S"  HERE THERE? 0= IF" EVALUATE
@@ -764,8 +793,6 @@ EXPORT
 
 ' <PRE> >BODY M@  ' NOOP  TO <PRE> \ 
 
-[DEFINED] DBG_COUNT [IF] DBG_COUNT M@  DBG_COUNT 0! [THEN]
-
 TO <PRE>
 
 : T-STOP
@@ -858,11 +885,11 @@ TO <PRE>
 : Wortbirne: ( n <name> -- )
   0 L, L, 
   TLINK , HERE TO TLINK
-  PARSE-NAME S",
+  PARSE-NAME  S",
 ;
 
 : Wortbirne ( n <name> -- )
-  TALIGN  >IN @  '  , >IN ! Wortbirne: ;
+  TALIGN  >IN @  ' , >IN ! Wortbirne: ;
 
 : TIMM 1 TLINK $10 -  L!  ;
 
