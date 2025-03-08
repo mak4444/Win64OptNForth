@@ -1,5 +1,5 @@
 REQUIRE PLACE  ~mak\place.f 
-REQUIRE [IF] ~MAK\CompIF4.f
+REQUIRE [IF] ~MAK\CompIF3.f
 REQUIRE MODULE: lib/ext/spf_modules.f
 
 [IFNDEF] BREAK : BREAK  POSTPONE EXIT POSTPONE THEN ; IMMEDIATE  [THEN]
@@ -153,7 +153,7 @@ EXPORT
 
 
 : STCR_
- ." ;/"    SOURCE TYPE \ CR
+ ." \ "    SOURCE TYPE \ CR
  ; 
 
 VECT STCR
