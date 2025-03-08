@@ -1,0 +1,51 @@
+\ 
+\ HERE  TIMAGE-BASE - &ENTRYCODE L!
+\ GASM_BIG
+\ 	andq    $-0x10,%rsp     \ A0DEB7 48 83 E4 F0
+
+( 0040E46F    4883E4F0 )              AND     RSP, # -10
+\         mov     %rsp,%rbp       \ A0DEBB 48 89 E5	
+( 0040E473    4889E5 )                MOV     RBP, RSP
+\         sub    $0x20,%rsp
+( 0040E476    4883EC20 )              SUB     RSP, # 20
+\         mov    $-0xB,%rcx
+( 0040E47A    48C7C1F5FFFFFF )        MOV     RCX, # FFFFFFF5
+\         call   'GetStdHandle  (%rip)
+( 0040E481    FF15C81EFFFF )          CALL    FFFF1EC8 [RIP]    @0040034F
+\         add    $0x20,%rsp
+( 0040E487    4883C420 )              ADD     RSP, # 20
+\         mov     %rax,  ' H-STDOUT >BODY  (%rip)
+( 0040E48B    488905AF26FFFF )        MOV     FFFF26AF [RIP] , RAX   @00400B41
+\         sub    $0x20,%rsp
+( 0040E492    4883EC20 )              SUB     RSP, # 20
+\         mov    $-0xC,%rcx
+( 0040E496    48C7C1F4FFFFFF )        MOV     RCX, # FFFFFFF4
+\         call   'GetStdHandle  (%rip)
+( 0040E49D    FF15AC1EFFFF )          CALL    FFFF1EAC [RIP]    @0040034F
+\         add    $0x20,%rsp
+( 0040E4A3    4883C420 )              ADD     RSP, # 20
+\         mov     %rax,  ' H-STDERR >BODY   (%rip)
+( 0040E4A7    488905A026FFFF )        MOV     FFFF26A0 [RIP] , RAX   @00400B4E
+\         sub    $0x20,%rsp
+( 0040E4AE    4883EC20 )              SUB     RSP, # 20
+\         mov    $-0xA,%rcx
+( 0040E4B2    48C7C1F6FFFFFF )        MOV     RCX, # FFFFFFF6
+\         call   'GetStdHandle  (%rip)
+( 0040E4B9    FF15901EFFFF )          CALL    FFFF1E90 [RIP]    @0040034F
+\         add    $0x20,%rsp
+( 0040E4BF    4883C420 )              ADD     RSP, # 20
+\         mov     %rax,  ' H-STDIN >BODY   (%rip)
+( 0040E4C3    4889056A26FFFF )        MOV     FFFF266A [RIP] , RAX   @00400B34
+\ 	mov    $ HERE FREE_size + -0xF ALSO FORTH AND [P] ,%rbp \ stack
+( 0040E4CA    48C7C5C0E44001 )        MOV     RBP, # 0140E4C0
+\ 	lea    -0x1000 (%rbp), %r13
+( 0040E4D1    4C8DAD00F0FFFF )        LEA     R13, [RBP+FFFFF000]
+\         mov     USER-OFFS (%rip) , %rbx
+( 0040E4D8    488B1DB9EEFFFF )        MOV     RBX, FFFFEEB9 [RIP]    @0040D398
+\ 	sub	%rbx,%r13
+( 0040E4DF    4929DD )                SUB     R13, RBX
+\ 	JMP  ' FMAIN
+( 0040E4E2    E969FFFFFF )            JMP     0040E450 { FMAIN }
+\ 
+\ 
+\ END-CODE
