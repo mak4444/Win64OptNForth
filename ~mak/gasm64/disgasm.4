@@ -3,7 +3,6 @@ REQUIRE [IFNDEF] ~nn/lib/ifdef.f
 REQUIRE $!  ~mak/place.f
 REQUIRE CASE lib/ext/case.f
 REQUIRE NUMBER? ~mak/lib/fpcnum.f
-REQUIRE MODULE: lib/ext/spf_modules.f
 
 \- DEFER : DEFER VECT ;
 
@@ -14,10 +13,6 @@ REQUIRE MODULE: lib/ext/spf_modules.f
 \- OR!	:  OR! ( N ADDR -- )	DUP @ ROT OR	SWAP ! ;
 \- THERE : THERE HERE ;
 \- 4+ : 4+ 4 + ;
-
-\- LAST-NON 0 VALUE LAST-NON
-\- RECURSE : RECURSE \ Compile a call to the current (not yet finished) definition.
-\- RECURSE	LAST @ NAME> LAST-NON UMAX COMPILE, ; IMMEDIATE
 
 \- '(S") -1 VALUE '(S")
 \- '(C") -1 VALUE '(C")
