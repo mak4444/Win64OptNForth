@@ -16,7 +16,7 @@ CR .( Loading Intel Pentium MMX disassembler...)
 
 WARNING 0!
 
-REQUIRE [IF] ~mak\CompIF.f
+REQUIRE [IF] ~mak/CompIF3.f
 REQUIRE CASE lib\ext\case.f
 REQUIRE WITHIN lib\include\core-ext.f
 : DEFER VECT ;
