@@ -13,7 +13,11 @@
 ; IMMEDIATE
 [THEN]
 
- REQUIRE forth ~mak/lib/caseins.f
+\ REQUIRE <DBG> ~mak\lib\DBGWC.F
+\ ~mak\Edit.4
+\+ </DBG> </DBG>
+
+ REQUIRE CASE-INS ~mak/lib/caseins.f
 \+ CASE-INS  CASE-INS ON
 \ - IMAGE-BEGIN ' IMGLIT VALUE IMAGE-BEGIN
 \- DEFER : DEFER VECT ;
@@ -142,19 +146,24 @@ VECT MINST
 	THEN ;
 
 REQUIRE 'NOOP	Meta_x86_64/SRC/forward.f
-\ REQUIRE DISARM		Meta_x86_64/SRC/disgasm64.4
-\ REQUIRE DISARM		Meta_x86_64/SRC/disfasm.4th
-\ REQUIRE DISARM		~mak/gasm64/disgasm.4
-REQUIRE SMINST ~mak/amd64/disasm.fs 
+\ REQUIRE INST Meta_x86_64/SRC/disgasm64.4
+\ REQUIRE INST Meta_x86_64/SRC/disfasm.4th
+\ REQUIRE INST ~mak/gasm64/disgasm.4
+\ REQUIRE SMINST ~mak/amd64/disasm.fs 
+ REQUIRE INST ~mak\amd64\hdasmx64.fth 
 
 ' INST TO MINST
 \+ SMINST ' SMINST TO MINST
 
 REQUIRE INCLUDED_AL	Meta_x86_64/SRC/mlist.f 
 
+\+ <DBG>  <DBG> 
+
 REQUIRE GASM64_MOD Meta_x86_64/SRC/gasm64.4th
+\ REQUIRE VFXCODE ~mak\amd64\hasmx64.fth 
+ REQUIRE VFXCODE Meta_x86_64\SRC\thasmx64.fth 
 
-
+\+ </DBG> </DBG>
 
 \ S" Meta_x86_64\SRC\aarchext.4" INCLUDED
 
@@ -174,6 +183,7 @@ REQUIRE GASM64_MOD Meta_x86_64/SRC/gasm64.4th
 128         CONSTANT    T-ITABLE-SIZE               \ 
 REQUIRE T-START	Meta_x86_64/SRC/tc.f 
 
+
 \ : MEHO HERE S" MEHO_" EVALUATE DP ! ;
 : OSSS HERE S" STARTOS" EVALUATE DP ! ;
 
@@ -186,6 +196,6 @@ REQUIRE T-START	Meta_x86_64/SRC/tc.f
 
 
 \ CASE-INS ON
-
+                                      
 \ T-ROM-SIZE
 
