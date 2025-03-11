@@ -99,7 +99,7 @@ THS> .( VIEW_S)
 .global	SEG_SET
 
 S" ForthSrc\" INPUT_PATH $!
-S" Forth64S/src/" OUTPUT_PATH $!
+S" ForthSrc\OUTPUT\" OUTPUT_PATH $!
 
 .forth	SEG_SET
 $44 toMM_SIZE
@@ -109,6 +109,7 @@ $44 toMM_SIZE
  S" imporot.4" G_INCLUDED
 
  S" src_PRIMITIVES.4" GINCLUDED
+ S" spf_floatkern.4" GINCLUDED
 
  S" src_VARS.4" GINCLUDED
 
@@ -117,19 +118,19 @@ $44 toMM_SIZE
  S" macroopt.4" GINCLUDED
 \ S" noopt.f" GINCLUDED
 
+
  S" NUMB_PARSE_IO.4" GINCLUDED
 
  S" LITERAL.4" GINCLUDED
 
+
  S" src_FIND_INTERP.4" GINCLUDED
 
- S" _mak/CompIF1.4"   GINCLUDED
+\ S" _mak/CompIF1.4"   GINCLUDED
 
- S" TERM/INCLUDE.4" GINCLUDED
+ S" INCLUDE.4" GINCLUDED
  S" fstart.4" GINCLUDED
-(*
 
-*)
  S" main.4" G_INCLUDED
 
 THS::
@@ -150,6 +151,8 @@ THS_CLOSE
 
  mcr .( TVIEWLINK=)
 TVIEWLINK  dup mh. ' VIEW_LINK >BODY  dup mh.  !
+ mcr .( TUSER-OFFS=)
+TUSER-OFFS @ dup mh. USER-OFFS !
 
   S" Forth64.exe" TSAVE 
   BYE
