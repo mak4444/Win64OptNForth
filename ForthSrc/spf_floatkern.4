@@ -37,10 +37,32 @@ VFXCODE FDEPTH  \ *
 	RET
 END-CODE
 
+
+VFXCODE FABS   
+       FABS
+       RET
+END-CODE
+
+VFXCODE F*     \ * DE C9
+       FMULP ST(1), ST(0)
+       RET
+END-CODE
+
 VFXCODE F+      \   DE C1
        FADDP ST(1), ST
        RET
 END-CODE
+
+VFXCODE F/       \ DE F9
+       FDIVP ST(1), ST
+       RET
+END-CODE
+
+VFXCODE FDROP  \ *
+       FSTP ST(0)
+       RET
+END-CODE
+
 
 VFXCODE F!
        FSTP  QWORD 0 [RAX]
@@ -62,11 +84,85 @@ VFXCODE FNEGATE  \ *
        RET
 END-CODE
 
+VFXCODE FLOG ( F: r1 -- r2 ) \ *
+       FLDLG2
+       FXCH
+       FYL2X
+       RET
+END-CODE
+
+VFXCODE FDUP   \ *
+       FLD ST(0)
+       RET
+END-CODE
+
+VFXCODE FINT
+       FRNDINT
+       RET
+END-CODE
 
 VFXCODE .E
        FLDZ
        RET
 END-CODE
+
+VFXCODE F0=      \ *
+       LEA RBP, -8 [RBP]
+       MOV 0 [RBP], RAX
+       XOR RBX, RBX
+       FTST
+       FFREE ST
+       FINCSTP
+       FSTSW AX
+       SAHF
+       Z, if,
+         MOV RBX, # -1
+       then,
+       MOV RAX, RBX
+       RET
+END-CODE
+
+VFXCODE F0<      \ *
+       LEA RBP, -8 [RBP]
+       MOV 0 [RBP], RAX
+       XOR RBX, RBX
+       FTST
+       FFREE ST
+       FINCSTP
+       FSTSW AX
+       SAHF
+       JNB l$1
+       MOV RBX, # -1
+l$1:   MOV RAX, RBX
+       RET
+END-CODE
+
+VFXCODE F<              \ *
+       LEA RBP, -8 [RBP]
+       MOV 0 [RBP], RAX
+       XOR RBX, RBX
+       FCOMPP
+       FSTSW  AX
+       SAHF
+       JBE l$1
+       MOV RBX, # -1
+l$1:   MOV RAX, RBX
+       RET
+END-CODE
+
+VFXCODE F=             \ *
+       LEA RBP, -8 [RBP]
+       MOV 0 [RBP], RAX
+       XOR RBX, RBX
+       FCOMPP
+       FSTSW  AX
+       SAHF
+       JNE  l$1
+       MOV RBX, # -1
+l$1:   MOV RAX, RBX
+       RET
+END-CODE
+
 
 VFXCODE S>F
       	MOV -8 [RBP], RAX      	
@@ -74,6 +170,11 @@ VFXCODE S>F
        MOV   RAX, 0 [RBP]
        LEA   RBP, 8 [RBP]
 
+       RET
+END-CODE
+
+VFXCODE FINIT
+       FNINIT
        RET
 END-CODE
 
@@ -101,6 +202,26 @@ VFXCODE GETFPUCW ( -- u )     \ *
        RET
 END-CODE
 
+
+VFXCODE F[LOG] \ *        \ èñï 2 ðåãèñòðà
+       FLDLG2
+       FXCH
+       FYL2X
+       FRNDINT
+       RET
+END-CODE
+
+
+VFXCODE ROUND-MODE
+        FSTCW -8 [RBP]
+       BTR   DWORD -8 [RBP],  0Ah
+       BTR   DWORD -8 [RBP],  0Bh
+        FLDCW -8 [RBP]
+
+       RET
+END-CODE
+
+
 VFXCODE UP-MODE
         FSTCW -8 [RBP]
        BTR   DWORD -8 [RBP],  0Ah
@@ -110,3 +231,52 @@ VFXCODE UP-MODE
        RET
 END-CODE
 
+VFXCODE LOW-MODE
+        FSTCW -8 [RBP]
+       BTS   DWORD -8 [RBP],  0Ah
+       BTR   DWORD -8 [RBP],  0Bh
+        FLDCW -8 [RBP]
+       RET
+END-CODE
+
+VFXCODE FR>S
+      	LEA RBP, -8 [RBP]
+	null-op	48H C, 0DFH C, 7DH C, 0 C, \	FSTP    QWORD 0 [RBP]
+	MOV     RBX, 0 [RBP]
+	MOV     0 [RBP], RAX
+	MOV     RAX, RBX
+       RET
+END-CODE
+
+VFXCODE FLOAT>DATA
+
+      	LEA RBP, -8 [RBP]
+        FSTP QWORD 0 [RBP]
+     	XCHG RAX, 0 [RBP]
+       RET
+END-CODE
+
+VFXCODE DATA>FLOAT
+
+     	XCHG RAX, 0 [RBP]
+        FLD QWORD 0 [RBP]
+      	LEA RBP, 8 [RBP]
+       RET
+END-CODE
+
+
+VFXCODE SFLOAT>DATA
+
+      	LEA RBP, -8 [RBP]
+        FSTP DWORD 0 [RBP]
+     	XCHG RAX, 0 [RBP]
+       RET
+END-CODE
+
+VFXCODE DATA>SFLOAT
+
+     	XCHG RAX, 0 [RBP]
+        FLD DWORD 0 [RBP]
+      	LEA RBP, 8 [RBP]
+       RET
+END-CODE
