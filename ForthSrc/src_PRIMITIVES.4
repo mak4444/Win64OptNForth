@@ -1,1171 +1,9 @@
-
-
- TEXEC_SET
-
-
-CODE TEST333
-
-\  add   (%rax,%rax,2),%edx
-
-\	POP %r8
-\	POP %rAX
-
-\	$f2 c, $f c, $10 c, 07 c,
-
-
-END-CODE
-
-
- mcr .( SST0=) here mh.
-\ CREATE SSSTT0  \ 0 , 
-   here mh.
- mcr .( SST=) here mh.
-\ CREATE SSSTT \ 0 , 
-
-
-CREATE test3331
- $0f C, 00  C, $c0 C,
- $0f C, 01  C, $c0 C,
-
-\ Push the address of the top element of the return stack 
-\ onto the parameter stack.
-VFXCODE RP@	(  -- addr )
-	LEA    RBP, -8 [RBP]
-	MOV   0 [RBP], RAX
-	LEA    RAX, 8 [RSP]
-	NEXT,
-END-CODE
-
-
-VFXCODE	DROP	\ remove element of parameter stack .
-CODL	D>S
-\+ null-op null-op	
-	DROP,
-CODL	NOOP
-	NEXT,
-END-CODE
-
-' NOOP TO 'CRASH
-' NOOP TO 'NOOP
-' DROP TO 'DROP
-
-\ Set the return stack pointer to n .
-VFXCODE RP!	( N -- )
-	POP     RBX
-	MOV     RSP, RAX
-	MOV     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	JMP     RBX \ unnecessary REX.W
-END-CODE
-
-VFXCODE 2RDROP
-	MOV     RBX, 0 [RSP]
-	LEA     RSP, 18h [RSP]
-	JMP     RBX
-END-CODE
-
-\ Pop two items from return stack onto parameter stack
-VFXCODE 2R>	( -- D.lo D.hi )
-	MOV     RBX, 0 [RSP]
-	MOV     -8 [RBP], RAX
-	MOV     RCX, 10H [RSP]
-	MOV     RAX,  08 [RSP]
-	MOV     -10H [RBP], RCX
-	LEA     RBP, -10H [RBP]
-	LEA     RSP,  18H [RSP]
-	JMP     RBX
-END-CODE
-
-
-\ Push a copy of the top two items of the return stack onto the parameter stack.
-VFXCODE 2R@	( -- D.lo D.hi )
-	MOV     -8 [RBP], RAX
-	MOV     RAX, 8 [RSP]
-	MOV     RBX, 10H [RSP]
-	MOV     -10H [RBP], RBX
-	LEA     RBP, -10H [RBP]
-	NEXT
-END-CODE
-
-\ Pop two items from parameter stack, push onto return stack.
-VFXCODE 2>R	( D -- )
-	POP     RBX
-	PUSH    QWORD 0 [RBP]
-	PUSH    RAX
-	LEA     RBP, 10H [RBP]
-	MOV     RAX, -8 [RBP]
-	JMP     RBX
-END-CODE
-
-VFXCODE SP@	( -- N )
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, RBP
-	NEXT
-END-CODE
-
-\ Set the parameter stack pointer to specified value.
-VFXCODE SP!	( n -- )
-	LEA     RBP, 8 [RAX]
-	MOV     RAX, -8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE PERFORM	( ... [tx] -- ...' )
-CODL @EXECUTE
-	MOV     RAX, 0 [RAX]
-\ Execute the word whose CFA is on the stack
-CODL EXECUTE	( ... tx -- ...' )
-	MOV     RDX, RAX
-	MOV     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	JMP     RDX
-END-CODE
-
-' PERFORM TO 'PERFORM
-' EXECUTE TO 'EXECUTE
-
-VFXCODE SL@
-	MOV     EAX, 0 [RAX]
-	CDQE
-	NEXT
-END-CODE
-
-VFXCODE L@
-	MOV     EAX, 0 [RAX]
-	NEXT
-END-CODE
-
-\ ARM Forth word @   ( addr -- n )
-\ Fetch a value from addr
-VFXCODE @		( A -- N )
-	MOV     RAX, 0 [RAX]
-	NEXT
-END-CODE
-
-' @ TO 'GET
-
-VFXCODE C@		( A -- c )
-	MOVZX   EAX, Byte 0 [RAX]
-	NEXT
-END-CODE
-
-VFXCODE W@		( A -- c )
-	MOVZX   EAX, Word 0 [RAX]
-	NEXT
-END-CODE
-
-\ Store the least significant 8 bits of char at the specified addr
-VFXCODE C!		( N,A -- )
-	MOV     DL, 0 [RBP]
-	MOV     byte 0 [RAX], DL
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE W!	( N,A -- )
-	MOV     EDX, 0 [RBP]
-	MOV     0 [RAX], DX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE L!	( N,A -- )
-	MOV     EDX, 0 [RBP]
-	MOV     0 [RAX], EDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-\  Store value n into the address addr
-VFXCODE !	( N,A -- )
-	MOV     RDX, 0 [RBP]
-	MOV     0 [RAX], RDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE +!		( N,A -- )
-	MOV     RDX, 0 [RBP]
-	ADD     0 [RAX], RDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE C+!		( N,A -- )
-	MOV     RDX, 0 [RBP]
-	ADD     byte 0 [RAX], DL
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE L+!		( N,A -- )
-	MOV     RDX, 0 [RBP]
-	ADD     0 [RAX], EDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE LOR!		( N,A -- )
-	MOV     RDX, 0 [RBP]
-	OR      0 [RAX], EDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE OR!		( N,A -- )
-	MOV     RDX, 0 [RBP]
-	OR      0 [RAX], RDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE XOR!		( N,A -- )
-	MOV     RDX, 0 [RBP]
-	XOR      0 [RAX], RDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE 1+!	( N A -- )
-	INC     QWord 0 [RAX]
-	MOV     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ [A] = 0
-VFXCODE 0!		( A -- )
-CODL OFF		( A -- )
-	MOV     QWord 0 [RAX], # 0
-\+ null-op null-op	
-	DROP,
-	NEXT
-END-CODE
-
-VFXCODE ON		( A -- )
-	MOV     QWord 0 [RAX], # -1
-\+ null-op null-op	
-	DROP,
-	NEXT
-END-CODE
-
-\  Fetch a 64 bit value from addr
-VFXCODE 2@		( addr -- low32bits high32bits )
-	MOV     RDX, 8 [RAX]
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RDX
-	MOV     RAX, 0 [RAX]
-
-	NEXT
-END-CODE
-
-VFXCODE 2!		( D A -- )
-	MOV     RDX, 0 [RBP]
-	MOV     0 [RAX], RDX
-	MOV     RDX, 8 [RBP]
-	MOV     8 [RAX], RDX
-	MOV     RAX, 10H [RBP]
-	LEA     RBP, 18H [RBP]
-	NEXT
-END-CODE
-
-
-VFXCODE COUNT	( a -- a+1 c ) 
-	LEA     RBP, -8 [RBP]
-	LEA     RDX,  1 [RAX]
-	MOVZX   RAX, Byte 0 [RAX]
-	MOV     0 [RBP], RDX
-	NEXT
-END-CODE
-
-VFXCODE U>D
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	XOR     RAX, RAX
-	NEXT
-END-CODE
-
-VFXCODE S>D
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX	 \ DUP,
-	SAR     RAX, # 3FH
-	NEXT
-END-CODE
-
-VFXCODE C>S ( c -- n )
-	MOVSX   RAX, AL
-	NEXT
-END-CODE
-
-VFXCODE W>S ( c -- n )
-	MOVSX   RAX, AX
-	NEXT
-END-CODE
-
-VFXCODE L>S ( c -- n )
-	MOVSXD  RAX, EAX
-	NEXT
-END-CODE
-
-VFXCODE MIN	( N1,N2 -- MIN )
-	CMP     RAX, 0 [RBP]
-	CMOVNLE  RAX, 0  [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE UMIN	( N1,N2 -- MIN )
-	CMP     RAX, 0 [RBP]
-	CMOVNBE  RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE MAX	( N1,N2 -- MAX )
-	CMP     RAX, 0 [RBP]
-	CMOVL   RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ ÌÀÊÑÈÌÓÌ
-VFXCODE UMAX	( N1,N2 -- MAX )
-	CMP     RAX, 0 [RBP]
-	CMOVB   RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ Return absolute value of top stack item
-VFXCODE ABS	( n -- +n )
-	CQO
-	XOR     RAX, RDX
-	SUB     RAX, RDX
-	NEXT
-ASM_END
-
-1 [IF]
-\  If n1 is equal to n2, return TRUE. Otherwise FALSE.
-VFXCODE =		( a b -- f )
-\  If n is equal to 0, return TRUE. Otherwise FALSE.
-	XOR     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-CODL 0=		( a -- f )
-     	SUB     RAX, # 01
-     	SBB     RAX, RAX
-
-	NEXT
-END-CODE
-[ELSE]
-CODE =		( a b -- f )
-\  If n is equal to 0, return TRUE. Otherwise FALSE.
-	xor    0x0(%rbp),%rax
-	lea    0x8(%rbp),%rbp
-CODL 0=		( a -- f )
-     	sub    $1 , %rax
-     	sbb	%rax,%rax
-
-	NEXT
-END-CODE
-[THEN]
-
-' =	TO '=
-
-VFXCODE  D= ( xd1 xd2 -- flag ) \ 94 DOUBLE
-\ flag is true if and only if xd1 is bit-for-bit the same as xd2
-	MOV     RDX, 0 [RBP]
-	XOR     RAX, 8 [RBP]
-	XOR     RDX, 10H [RBP]
-	OR      RAX, RDX
-	SUB     RAX, # 01
-	SBB     RAX, RAX
-	LEA     RBP, 18H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE D0=		( a b -- f )
-	OR      RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	SUB     RAX, # 01
-	SBB     RAX, RAX
-	NEXT
-END-CODE
-
-VFXCODE >		( a b -- f )
-	CMP     RAX, 0 [RBP]
-	SETL	AL
-	NEG     AL
-	MOVSX   RAX, AL
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE <		( a b -- f )
-	CMP     RAX, 0 [RBP]
-	SETNLE	AL
-	NEG     AL
-	MOVSX   RAX, AL
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ If n1 is not equal to n2, return TRUE.  Otherwise FALSE.
-VFXCODE <>		( a b -- f )
-	XOR     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-\ If n is not equal to 0, return TRUE.  Otherwise FALSE.
-CODL 0<>		( a b -- f )
-	NEG     RAX
-	SBB     RAX, RAX
-	NEXT
-END-CODE
-
-VFXCODE 0>		( n -- f )
-	NEG     RAX
-\ Returns true if top is negative, ie sign bit is on.
-CODL 0<		( n -- f )
-	SAR     RAX, # 3FH
-	NEXT
-END-CODE
-
-VFXCODE U>	( n1 n2 -- f )
-	CMP     RAX, 0 [RBP]
-	SBB     RAX, RAX
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE U< ( a b -- f )
-	CMP     0 [RBP], RAX
-	SBB     RAX, RAX
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE WITHIN
-	MOV     RDX, 8 [RBP]
-	SUB     RAX, 0 [RBP]
-	SUB     RDX, 0 [RBP]
-	SUB     RDX, RAX
-	SBB     RAX, RAX
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE ANDC	( N1,N2 -- N )
-	NOT     RAX
-\ Perform bit-wise logical AND of top two items.
-CODL AND	( N1,N2 -- N )
-	AND     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-
-\ Perform bit-wise logical OR of top two items on parameter stack.
-VFXCODE OR		( N1,N2 -- N )
-	OR      RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ Perform bit-wise logical XOR of top two items on parameter stack.
-VFXCODE XOR	( N1,N2 -- N )
-	XOR      RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-
-
-\ Logically invert the bits of top stack item.
-VFXCODE INVERT	( N -- N1 )
-CODL NOT	( N -- N1 )
-	NOT     RAX
-	NEXT
-ASM_END
-
-\ Negate number on top of stack.
-VFXCODE NEGATE	( n - -n)
-	NEG     RAX
-	NEXT
-ASM_END
-
-VFXCODE DNEGATE ( d - -d)
-	MOV     RDX, 0 [RBP]
-	NEG     RAX
-	NEG     RDX
-	SBB     RAX, # 00
-        MOV     0 [RBP], RDX
-	NEXT
-ASM_END
-
-VFXCODE -		( N1,N2 -- N1-N2 )
-	NEG     RAX
-CODL +		( N1 N2 -- N1+N2 )
-	ADD     RAX, 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-' + TO '+
-
-VFXCODE D+ ( d1|ud1 d2|ud2 -- d3|ud3 ) \ 94 DOUBLE
-	MOV     RDX, 0 [RBP]
-	ADD     10H [RBP], RDX
-	ADC     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-ASM_END
-
-
-VFXCODE D- ( d1|ud1 d2|ud2 -- d3|ud3 ) \ 94 DOUBLE
-	MOV     RDX, 0 [RBP]
-	SUB     10H [RBP], RDX
-	MOV     RDX, 0 [RBP]
-	SBB     RDX, RAX
-	MOV     RAX, RDX
-	LEA     RBP, 10H [RBP]
-	NEXT
-ASM_END
-
-VFXCODE D< ( d1 d2 -- flg ) \ 94 DOUBLE
-	MOV     RDX, 0 [RBP]
-	CMP     10H [RBP], RDX
-	SBB     8 [RBP], RAX
-	SETL	AL
-	NEG     AL
-	MOVSX   RAX, AL
-	LEA     RBP, 18H [RBP]
-	NEXT
-ASM_END
-
-VFXCODE D2/ \ d1 -- d1/2
-	SAR     RAX, # 1
-	RCR     QWord 0 [RBP], # 1
-	NEXT
-ASM_END
-
-VFXCODE CELL+	( N -- N+8 )
-	LEA     RAX, 4 [RAX]
-CODL 4+		( N -- N+4 )
-	INC     RAX
-CODL 3+		( N -- N+2 )
-	INC     RAX
-CODL 2+		( N -- N+2 )
-	INC     RAX
-CODL 1+		( N -- N+1 )
-CODL CHAR+
-	INC     RAX
-	NEXT
-END-CODE
-\ 4 TR> DECIMAL 1+ .
-
-VFXCODE CELL-	( N -- N-8 )
-	LEA     RAX, -4 [RAX]
-CODL 4-		( N -- N+4 )
-	LEA     RAX, -2 [RAX]
-CODL 2-		( N -- N-2 )
-	DEC     RAX
-CODL 1-		( N -- N-1 )
-	DEC     RAX
-	NEXT
-END-CODE
-
-VFXCODE CELLS	( N -- 8*N )
-	LEA     RAX, 0 [RAX] [RAX]
-CODL 4*	( N -- 4*N )
-	LEA     RAX, 0 [RAX] [RAX]
-CODL 2*		( N -- 2*N )
-	LEA     RAX, 0 [RAX] [RAX]
-	NEXT
-END-CODE
-
-VFXCODE 2/		( N -- N/2 )
-	SAR     RAX, # 1
-	NEXT
-END-CODE
-
-VFXCODE U2/        ( N -- N/U2 )
-	SHR     RAX, # 1
-        NEXT
-END-CODE
-
-\ 32*32=lo(32)
-VFXCODE *		( a b -- a*b )
-	IMUL    QWord 0 [RBP]
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE /
-	MOV     RCX, RAX
-	MOV     RAX, 0 [RBP]
-	CQO
-	IDIV    RCX
-	LEA     RBP, 8 [RBP]
-	NEXT
-ASM_END
-
-VFXCODE MOD
-	MOV     RCX, RAX
-	MOV     RAX, 0 [RBP]
-	CQO
-	IDIV    RCX
-	LEA     RBP, 8 [RBP]
-	MOV     RAX, RDX
-	NEXT
-ASM_END
-
-
-VFXCODE U/
-	MOV     RCX, RAX
-	MOV     RAX, 0 [RBP]
-	XOR     RDX, RDX
-	LEA     RBP, 8 [RBP]
-	DIV     RCX
-	NEXT
-ASM_END
-
-VFXCODE UM*
-	MUL     QWord 0 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, RDX
-	NEXT
-ASM_END
-
-VFXCODE M*
-	IMUL     QWord 0 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, RDX
-	NEXT
-ASM_END
-
-VFXCODE /MOD ( n1 n2 -- rem quot )
-	MOV     RCX, RAX
-	MOV     RAX, 0 [RBP]
-	CQO
-	IDIV    RCX
-	MOV     0 [RBP], RDX
-	NEXT
-ASM_END
-
-VFXCODE UM/MOD
-	MOV     RCX, RAX
-	MOV     RDX, 0 [RBP]
-	MOV     RAX, 8 [RBP]
-	DIV     RCX
-	LEA     RBP, 8 [RBP]
-	MOV     0 [RBP], RDX
-	NEXT
-ASM_END
-
-\ duplicate n1 if <> 0
-VFXCODE ?DUP	( N -- N,N )  ( 0 -- 0 )
-     	TEST    RAX, RAX
-	NZ, if,
-CODL DUP	( N -- N,N )  \ Duplicate the top element of the stack.
-	 LEA     RBP, -8 [RBP]
-	 MOV     0 [RBP], RAX
-	then,
-	NEXT
-ASM_END
-
-\ END-CODE
-' DUP TO 'DUP
-
-\ Duplicate double element of data stack.
-VFXCODE 2DUP	(  a b -- a b a b )
-	MOV     RDX, 0 [RBP]
-	MOV     -8 [RBP], RAX
-	MOV     -10H [RBP], RDX
-	LEA     RBP, -10H [RBP]
-	NEXT
-END-CODE
-
-\ Exchange the top two items on the stack
-VFXCODE SWAP	( N1,N2 -- N2,N1 )
-	MOV     RDX, 0 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, RDX
-	NEXT
-END-CODE
-
-VFXCODE CS-SWAP
-	NOP
-\ Swap double element of data stack.
-CODL 2SWAP	( n1 n2  n3 n4 -- n3 n4  n1 n2 )
-	MOV     RCX, 0 [RBP]
-	MOV     RDX, 8 [RBP]
-	MOV     RBX, 10H [RBP]
-	MOV     10H [RBP], RCX
-	MOV     8 [RBP], RAX
-	MOV     0 [RBP], RBX
-	MOV     RAX, RDX
-	NEXT
-END-CODE
-
-\ Remove double element of data stack.
-VFXCODE CS-DROP
-	NOP
-CODL 2DROP  	( D -- )
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, 10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE CS-PICK  ( xu .. x0 u -- xu .. x0 xu )
-	LEA     RAX, 0 [RAX] [RAX]
-	MOV     RDX, 8 [RAX*8] [RBP]  \ !!!!!!!
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RDX
-	MOV     RAX, 8 [RAX*8]
-	NEXT
-END-CODE
-
-VFXCODE 2NIP	( D -- )
-	MOV     RDX, 0 [RBP]
-	LEA     RBP, 10H [RBP]
-	MOV     0 [RBP], RDX
-	NEXT
-END-CODE
-
-\ Push a copy of the second stack item.
-VFXCODE OVER	( n1 n2 -- n1 n2 n1 )
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, 8 [RBP]
-	NEXT
-END-CODE
-
-' OVER	TO 'OVER
-
-VFXCODE 2OVER	( n1 n2 -- n1 n2 n1 )
-	MOV     RDX, 10H [RBP]
-	MOV     -8 [RBP], RAX
-	MOV     -10H [RBP], RDX
-	MOV     RAX, 8 [RBP]
-	LEA     RBP, -10H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE PICK	( Nm,...,N1,K -- Nm,...,N1,Nk )
-	MOV     RAX, 0 [RBP] [RAX*8]
-	NEXT
-END-CODE
-
-\ CODE PLUCK	( N1 N2 N3 -- N1 N2 N3 N1 ) 
-\ Tuck the first element under the second one.
-VFXCODE TUCK	( n1 n2 --- n2 n1 n2 )
-	LEA     RBP, -8 [RBP]
-	MOV     RDX, 8 [RBP]
-	MOV     8 [RBP], RAX
-	MOV     0 [RBP], RDX
-	NEXT
-END-CODE
-
-VFXCODE ROLL          \ nn..n0 n -- nn-1..n0 nn
-\ *G Rotate the order of the top N stack items by one place such
-\ ** that the current top of stack becomes the second item and
-\ ** the Nth item becomes TOS. See also *\fo{ROT}.
-
-	TEST    RAX, RAX
-	NZ, if,
-	  MOV     RCX, RAX
-	  LEA     RAX, 0 [RAX*8]
-	  MOV     RDX, RBP
-	  ADD     RDX, RAX
-	  MOV     RBX, 0 [RDX]
-	  begin,
-	    LEA     RDX, -8 [RDX]
-	    MOV     RAX, 0 [RDX]
-	    MOV     8 [RDX], RAX
-	    DEC     RCX
-	  Z, while,
-	    MOV     RAX, RBX
-	  repeat,
-	else,
-	  MOV     RAX, 0 [RBP]
-	then,
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ Delete the second stack item.
-VFXCODE NIP	( n1 n2 -- n2 )
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-\ Rotate top three stack values, bringing the third item to the top.
-VFXCODE ROT	( n1 n2 n3 -- n2 n3 n1 )
-	MOV     RDX, 0 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, 8 [RBP]
-	MOV     8 [RBP], RDX
-	NEXT
-END-CODE
-
-
-\ Rotate top three stack values, bringing the top item to the third.
-VFXCODE -ROT	( n1 n2 n3 -- n3 n1 n2 )
-	MOV     RDX, 8 [RBP]
-	MOV     8 [RBP], RAX
-	MOV     RAX, 0 [RBP]
-	MOV     0 [RBP], RDX
-	NEXT
-END-CODE
-
-10 [IF]
-VFXCODE ARSHIFT	( a b -- a>>b ) \ arithmetic shift
-	MOV     CL, AL
-	MOV     RAX, 0 [RBP]
-	SAR     RAX, CL
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE RSHIFT	( a b -- a>>b )
-CODL >>
-	MOV     CL, AL
-	MOV     RAX, 0 [RBP]
-	SHR     RAX, CL
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-[ELSE]
-
-CODE ARSHIFT	( a b -- a>>b ) \ arithmetic shift
-	mov    %al,%cl
-	mov    0x0(%rbp),%rax
-	sar    %cl,%rax
-	lea    0x8(%rbp),%rbp
-	NEXT
-END-CODE
-
-CODE RSHIFT	( a b -- a>>b )
-CODL >>
-	mov    %al,%cl
-	mov    0x0(%rbp),%rax
-	shr    %cl,%rax	
-	lea    0x8(%rbp),%rbp
-	NEXT
-END-CODE
-
-[THEN]
-
-
-VFXCODE LSHIFT	( a b -- a<<b )
-CODL <<
-	MOV     CL, AL
-	MOV     RAX, 0 [RBP]
-	SHL     RAX, CL
-	LEA     RBP, 8 [RBP]
-	NEXT
-END-CODE
-
-
-VFXCODE TlsIndex!
-     	MOV     R13, RAX
-	JMP ' DROP \ BRANCH,
-END-CODE
-
-VFXCODE TlsIndex@
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	MOV     RAX, R13
-	NEXT
-END-CODE
-
-
-VFXCODE CDR
-     	MOV     RAX, -8 [RAX]
-	NEXT
-END-CODE
-
-VFXCODE NAME>C
-     	LEA     RAX, -18H [RAX]
-	NEXT
-END-CODE
-
-VFXCODE NAME>
-     	MOV     RAX, -18H [RAX]
-	NEXT
-END-CODE
-
-VFXCODE NAME>F
-     	LEA     RAX, -10H [RAX]
-	NEXT
-END-CODE
-
-10 [IF]
-VFXCODE ERASE ( addr len  -- )
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX \ DUP
-	MOV     RAX, # 0
-CODL FILL ( addr len c -- )
-	MOV     RCX, 0 [RBP]
-	NCXZ, if,
-	  MOV     RDI, 8 [RBP]
-	  REP	STOSB
-	then,
-	MOV     RAX, 10h [RBP]
-	LEA     RBP, 18h [RBP]
-	NEXT
-END-CODE
-[ELSE]
-CODE ERASE ( addr len  -- )
-	DUP,
-	MOV	$0,%rax
-CODL FILL ( addr len c -- )
-	mov    0x0(%rbp),%rcx
-	jrcxz  0f
-	mov    0x8(%rbp),%rdi
-	rep stosb \ %al,%es:(%rdi)
-0:	mov    0x10(%rbp),%rax
-	lea    0x18(%rbp),%rbp
-	NEXT
-END-CODE
-[THEN]
-
-VFXCODE CCMOVE>
-	MOV     RCX, RAX
-	MOV     RDI, 0 [RBP]
-	MOV     RSI, 8 [RBP]
-	STD
-	ADD     RDI, RCX
-	ADD     RSI, RCX
-	DEC     RSI
-	DEC     RDI
-	NEXT
-END-CODE
-
-VFXCODE CMOVE>
-        MOV     RCX, 8 [RBP]
-	MOV     RDX, 0 [RBP]
-	MOV     R8, RAX
-	LEA     RCX, -8 [RCX] [RAX]
-	LEA     RDX, -8 [RDX] [RAX]
-	SHR     RAX, # 03
-	NZ, if,
-	  begin,
-	    MOV     RBX, 0 [RCX]
-	    SUB     RAX, # 01
-	    LEA     RCX, -8 [RCX]
-	    MOV     0 [RDX], RBX
-	    LEA     RDX, -8 [RDX]
-	  Z, until,
-	then,
-	  MOV     RAX, R8
-	  AND     RAX, # 07
-	  LEA     RCX, 7 [RCX]
-	  LEA     RDX, 7 [RDX]
-	NZ, if,
-	  begin,
-	    MOV     BL, 0 [RCX]
-	    SUB     RAX, # 01
-	    LEA     RCX, -1 [RCX]
-	    MOV     0 [RDX], BL
-	    LEA     RDX, -1 [RDX]
-	  Z, until,
-	then,
-	MOV     RAX, 10H [RBP]
-        LEA     RBP, 18H [RBP]
-	NEXT
-END-CODE
-
-VFXCODE CMOVE 
-	MOV     RCX, RAX
-	MOV     RDI, 0 [RBP]
-	MOV     RSI, 8 [RBP]
-	CLD
-	REP	MOVSB
-	LEA     RBP, 18h [RBP]
-	MOV     RAX, -8 [RBP]
-	NEXT
-END-CODE
-
-VFXCODE SKIP
-	MOV     RDX, RAX
-	MOV     RCX, 0 [RBP]
-	MOV     RAX, 8 [RBP]
-	begin,
-	   NCXZ, if,
-	    ADC     AL, # 8Ah
-	    ADD     0 [RCX] [RCX], DIL
-	    Z, if,
-	      MOV     AL, # 14h
-            then,  
-          then,  
-	  CMP     AL, DL
-	Z, while,
-	  DEC     RCX
-	  INC     RAX
-	repeat,
-	MOV     8 [RBP], RAX
-	MOV     RAX, RCX
-	LEA     RBP, 8 [RBP]
-
-	NEXT
-END-CODE
-
-
-VFXCODE DOVALUE
-	NOP
-CODL DOCONSTANT
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	POP     RAX
-	MOV     RAX, 0 [RAX]
-	NEXT
-END-CODE
-
-VFXCODE DOCREATE
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	POP     RAX
-	NEXT
-END-CODE
-
-VFXCODE DOVECT
-	POP     RBX
-	MOV     RBX, 0 [RBX]
-	JMP     RBX
-END-CODE 
-
-CREATE &NOOP 'NOOP ,
-
-vfxCODE (?DO) (  limit index -- )
-	CMP     RAX, 0 [RBP]	\ index = limit
-	NZ, if,
-CODL (DO) (  limit index -- )
-	  POP     RDX		\ rdx = return address
-	  MOV     RCX, 0 [RDX]	\ exit address
-	  LEA     RDX, 8 [RDX]	\ step over it
-	  PUSH    RCX		\ rcx = exit address  
-	  PUSH    R15		\ r15 = old index - limit - msb
-	  PUSH    R14		\ r14 = old index     
-
-	  MOV     R15, RAX	\ rbx = index, r15 = index                                     
-	  SUB     R15, 0 [RBP]	\ r15 = index - limit 
-	  BTC     R15, 3Fh	\ r15 = index - limit  - msb ; BTC=complement
-	  MOV     R14, RAX 	\ r14 = index
-
-	  MOV     RAX, 8 [RBP]	\ restore TOS
-	  LEA     RBP, 10h [RBP] \ step data stack                               
-
-	  JMP     RDX
-	then,
-	MOV     RAX, 8 [RBP]	\ restore TOS
-	LEA     RBP, 10h [RBP]	\ step data stack
-	POP     RDX		\ rdx = return address
-	MOV     RDX, 0 [RDX]	\ exit address
-	JMP     RDX
-END-CODE
-
-' (?DO) TO '(?DO)
-' (DO) TO '(DO)
-
-VFXCODE LEAVE
-\ RSP+18: ESP+C:  exit address
-\ RSP+10: ESP+8:  old index-limit-$8000.0000  (incremented by LOOP)
-\ RSP+08: ESP+4:  old index                   (incremented by LOOP)
-\ RSP+00: return address
-\ R15:    new index-limit-xorbit63
-\ R14:    new index
-        POP     RDX	\ return address and discard it
-        POP     R14	\ index
-        POP     R15	\ index-limit-xorbit63
-	NEXT
-END-CODE
-
-
-VFXCODE UNLOOP
-\ RSP+18: ESP+C:  exit address
-\ RSP+10: ESP+8:  old index-limit-$8000.0000  (incremented by LOOP)
-\ RSP+08: ESP+4:  old index                   (incremented by LOOP)
-\ RSP+00: return address
-\ R15:    new index-limit-xorbit63
-\ R14:    new index
-        POP     RDX	\ return address and discard it
-        POP     R14	\ index
-        POP     R15	\ index-limit-xorbit63
-	POP     RCX
-	JMP     RDX
-END-CODE
-
-VFXCODE CALLBACKIN
-	MOV     RAX, R13
-        LEA     RBP, 2800H [RSP]
-	LEA     R13, 200H [RSP]
-        ret
-END-CODE
-
-VFXCODE PARAM	
-	LEA     RBP, -20H [RBP]
-	MOV     18H [RBP], RAX
-	MOV     10H [RBP], RCX
-	MOV     8 [RBP], RDX
-	MOV     0 [RBP], R8
-	MOV     RAX, R9
-        ret
-END-CODE
-
-VFXCODE MARAP
-	MOV     R9, RAX
-	MOV     R8,  0 [RBP]
-	MOV     RDX, 8 [RBP]
-	MOV     RCX, 10H [RBP]
-	MOV     RAX, 18H [RBP]
-	LEA     RBP, 20H [RBP]
-
-     ret
-END-CODE
-
-VFXCODE LOCALS_EXIT
-        POP     RBX
-        ADD     RSP, RBX
-        ret
-END-CODE
-
-VFXCODE DOCREATE
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX	\ DUP,
-	POP     RAX
-	RET
-END-CODE
-
-VFXCODE DOVALUE
-	NOP
-CODL DOCONSTANT
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX	\ DUP,
-	POP     RAX
-	MOV     RAX, 0 [RAX]
-	RET
-END-CODE
-
-VFXCODE DOVECT
-	POP     RBX
-	JMP     0 [RBX]
-END-CODE
-
-VFXCODE DOFIELD
-	POP     RBX
-	ADD     0 [RBX], RAX
-	RET
-END-CODE
+\- DOCREATE	: DOCREATE	R> ;
+\- DOCONSTANT	: DOCONSTANT	R> @ ;
+\- DOVALUE	: DOTVALUE	R> @ ;
+\- DOVECT 	: DOVECT	R> PERFORM ;
+
+\- DOFIELD	: DOFIELD	R> L@ + ;
 
 ' DOCREATE TO 'DOCREATE
 ' DOCONSTANT TO 'DOCONSTANT
@@ -1173,461 +11,347 @@ END-CODE
 ' DOVECT TO 'DOVECT
 ' DOFIELD TO 'DOFIELD
 
-VFXCODE USER-CODE
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	POP     RAX
-	MOV     EAX, 0 [RAX]
-	ADD     RAX, R13
-	RET
-END-CODE
+VARIABLE &INPUT
+VARIABLE &INPUT?
 
-' USER-CODE TO 'USER-CODE
+VARIABLE &OUTPUT
 
-0 VALUE  H-STDIN    \ хэндл файла - стандартного ввода
-1 VALUE  H-STDOUT   \ хэндл файла - стандартного вывода
-1 VALUE  H-STDERR   \ хэндл файла - стандартного вывода ошибок
+CREATE &START_INIT ' NOOP ,
+\ CREATE DP ' DPBuff ,
+VARIABLE DP
 
+VARIABLE EMITVAR
 
-VARIABLE KEY_BUF  0 , 0 , 0 ,
-10 [IF]
-VFXCODE OS_KEY
-	LEA     RBP, -8 [RBP]
-	MOV     0 [RBP], RAX
-	begin,
-	begin,
-	  MOV     RAX, # -1
-	  MOV     KEY_BUF [] , RAX
-	  PUSH    RSI
-	  SUB     RSP, # 30H
-	  MOV     RCX, ' H-STDIN >BODY []
-	  MOV     RDX, # KEY_BUF
-	  MOV     R8, # 1
-	  MOV     R9, # KEY_BUF 8 +
-	  MOV     QWord 20h [RSP], # 0
-	  CALL    'ReadConsoleInputA []    
-	  ADD     RSP, # 30h
-	  POP     RSI
-	  CMP     QWord KEY_BUF [] , # 01
-	NZ, until,
-	 MOVZX   RAX, Byte KEY_BUF 0eh + []
-	 TEST    RAX, RAX
-	NZ, until,
-	ret
-END-CODE
+TIMAGE-BASE CONSTANT IMAGE-BASE
 
-[ELSE]
+T: THERE DP @ ;
 
-CODE OS_KEY
-        lea     -0x08(%rbp),%rbp
-        mov     %rax,0x00(%rbp) 
-3:	movq    $-0x1,%rax
-        mov     %rax,KEY_BUF  (%rip)
-        Push    %rsi
-        sub    $0x30,%rsp
-        mov     ' H-STDIN >BODY  (%rip),%rcx
-        movq    $KEY_BUF ,%rdx
-        mov     $0x1,%r8
-        mov     $KEY_BUF 8 + ,%r9
-        movq    $0x0,0x20(%rsp)
-        call   'ReadConsoleInputA (%rip)
-        add    $0x30,%rsp
-        pop     %rsi
-	cmpq    $0x01,KEY_BUF (%rip)
-        jz      3B
-        movzb  KEY_BUF 0xe +  (%rip),%rax
-        test    %rax,%rax
-        jz      3B
-	ret
-END-CODE
-[THEN]
+T: ALLOT DP +! ;
 
-VARIABLE EMIT_BUF
+T: DP! DP ! ;
 
-CODE EMIT_M
-       mov     %al,EMIT_BUF (%rip)
-        sub    $0x30,%rsp
-        mov     ' H-STDOUT >BODY (%rip),%rcx
-        movq    $EMIT_BUF,%rdx
-        mov     $0x1,%r8
-        mov     $0,%r9
-        movq    $0x0,0x20(%rsp)
-        call    'WriteFile  (%rip)
-        add    $0x30,%rsp
-        mov     0x00(%rbp),%rax
-        lea     0x08(%rbp),%rbp
-        ret
-END-CODE
+T: ,   THERE ! 8 ALLOT ;
 
-CODE WRITE-FILE
-        sub    $0x30,%rsp
-        mov     %rax,%rcx
-        mov     0x08(%rbp),%rdx
-        mov     0x00(%rbp),%r8
-        mov     $0 ,%r9
-        movq    $0x0,0x20(%rsp)
-        call   'WriteFile  (%rip)
-        add    $0x30,%rsp
-        lea     0x10(%rbp),%rbp
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
+T: L, THERE L! 4 ALLOT ;
 
-VARIABLE READ_COUNT
+T: W, THERE W! 2 ALLOT ;
 
-CODE READ-FILE
+T: C, THERE C! 1 ALLOT ;
 
-        mov     %rbx,READ_COUNT (%rip)
-        sub    $0x30,%rsp
-        mov     %rax,%rcx
-        mov     0x08(%rbp),%rdx
-        mov     0x00(%rbp),%r8 
-        mov     $READ_COUNT,%r9
-        movq    $0x0,0x20(%rsp)
-        call    'ReadFile  (%rip)
-        add    $0x30,%rsp
-        lea     0x08(%rbp),%rbp
-        mov     READ_COUNT  (%rip),%ebx
-        and    $0x7FFFFFFF,%rbx
-        mov     %rbx,0x00(%rbp)
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
+' EMIT_M ->DEFER EMIT
 
-CODE COMMAND_LINE
-        lea    -0x08(%rbp),%rbp
-        mov    %rax,0x00(%rbp)
-        sub    $0x20,%rsp
-        call   'GetCommandLineA (%rip)
-        add    $0x20,%rsp
-        ret
-END-CODE
-	
-CODE ZOPEN-FILE
-        sub    $0x40,%rsp
-        mov     0x00(%rbp),%rcx
-        mov     %rax,%rdx
-        mov     $0x0,%r8
-        mov     $0x0,%r9
-        movq    $0x3,0x20(%rsp)
-        movq    $0x20,0x28(%rsp)
-        movq    $0x0,0x30(%rsp)
-        call    'CreateFileA  (%rip)
-        add    $0x40,%rsp
-        and     $0x7FFFFFFF,%rax
-        mov     %rax,0x00(%rbp)
-        xor     $0x7FFFFFFF,%rax
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
+: TYPE_M ( c-addr1 u --- )
+\ Output the string starting at c-addr and length u to the terminal.
+\ CC_LINES
+  0 ?DO COUNT EMIT LOOP DROP
+;
 
-END-CODE
-	
-CODE ZOPEN-FILE-SHARED
-        sub    $0x40,%rsp
-        mov     0x00(%rbp),%rcx
-        mov     %rax,%rdx
-        mov     $0x3,%r8
-        mov     $0x0,%r9
-        movq    $0x3,0x20(%rsp)
-        movq    $0x20,0x28(%rsp)
-        movq    $0x0,0x30(%rsp)
-        call    'CreateFileA  (%rip)
-        add    $0x40,%rsp
-        and     $0x7FFFFFFF,%rax
-        mov     %rax,0x00(%rbp)
-        xor     $0x7FFFFFFF,%rax
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
- 	
-CODE ZCREATE-FILE
-        sub    $0x40,%rsp
-        mov     0x00(%rbp),%rcx
-        mov     %rax,%rdx
-        mov     $0x0,%r8
-        mov     $0x0,%r9
-        movq    $0x2,0x20(%rsp)
-        movq    $0x20,0x28(%rsp)
-        movq    $0x0,0x30(%rsp)
-        call    'CreateFileA (%rip)
-        add    $0x40,%rsp
-        and     $0x7FFFFFFF,%rax
-        mov     %rax,0x00(%rbp)
-        xor     $0x7FFFFFFF,%rax
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
-	
-CODE ZCREATE-FILE-SHARED
-        sub    $0x40,%rsp
-        mov     0x00(%rbp),%rcx
-        mov     %rax,%rdx
-        mov     $0x3,%r8
-        mov     $0x0,%r9
-        movq    $0x2,0x20(%rsp)
-        movq    $0x20,0x28(%rsp)
-        movq    $0x0,0x30(%rsp)
-        call    'CreateFileA  (%rip)
-        add    $0x40,%rsp
-        and     $0x7FFFFFFF,%rax
-        mov     %rax,0x00(%rbp) 
-        xor     $0x7FFFFFFF,%rax
-        sub    $0x01,%rax
-        sbb     %rax,%rax       
-        ret
-END-CODE
-	
-CODE CLOSE-FILE
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        call    'CloseHandle  (%rip)
-        add    $0x20,%rsp
-        movq    $0x0,%rax
-        ret
-END-CODE
+: TYPE1 ( c-addr u -- ) \ 94
+  H-STDOUT \ DUP 0= IF DROP 2DROP BREAK
+  WRITE-FILE DROP \ THROW  !!!!!
+;
 
-CODE HALT
-        and    $-0x10,%rsp
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        call    'ExitProcess (%rip)
-        add    $0x20,%rsp
-        jmp    HERE
-END-CODE
+' TYPE_M ->DEFER TYPE
 
-CODE FILE-POSITION
-        lea     -0x10(%rbp),%rbp
-        movq    $0x0,0x08(%rbp)
-        movq    $0x0,0x00(%rbp)
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        movq    $0x0,%rdx
-        mov     0x00(%rbp),%r8
-        mov     $0x1,%r9
-        call    'SetFilePointer (%rip)
-        add    $0x20,%rsp
-        mov     %rax,0x08(%rbp)
-        add    $0x01,%rax
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
-	
-	
-CODE REPOSITION-FILE
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        mov     0x08(%rbp),%rdx
-        mov     0x00(%rbp),%r8 
-        mov     $0x0,%r9
-        call    'SetFilePointer  (%rip)
-        add    $0x20,%rsp
-        lea     0x10(%rbp),%rbp
-        add    $0x01,%rax
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
+: CR1 	$d EMIT	$a EMIT ;
+' CR1 ->defer CR
+
+VARIABLE TEXTINPUEX
+VARIABLE IVANTID
+
+0 VALUE BOOTSERV
+0 VALUE VOLUME
+
+: KEY?EX ( -- flg )
+ ;
+
+: SHIFT@  ;
+: CTL@  ;
+: ALT@  ;
+
+' KEY?EX ->DEFER KEY?
+
+' OS_KEY ->DEFER KEY
+
+: TAB	9  EMIT ;
+
+T: HALIGNED  1+  1 ANDC ;
+T: IALIGNED  3 + 3 ANDC ;
+T: QALIGNED  7 + 7 ANDC ;
+
+CREATE ALIGN-BYTES 8 ,
+
+T: ALIGNED ( addr -- a-addr ) \ 94
+\ a-addr - первый выровненный адрес, больший или равный addr.
+  ALIGN-BYTES @ DUP 0= IF 1+ DUP ALIGN-BYTES ! THEN
+  2DUP
+  MOD DUP IF - + ELSE 2DROP THEN ;
+
+: (S")  ( --- c-addr u )
+\ Runtime part of S"
+\ It returns address and length of an in-line counted string.
+  R>  COUNT 2DUP + >R ;
+
+\+ '(S") ' (S") TO '(S")
+
+: (Z")  ( --- c-addr u )
+\ Runtime part of S"
+\ It returns address and length of an in-line counted string.
+  R>  COUNT OVER + 1+ >R ;
+
+: (C")  ( --- c-addr )
+   R> DUP COUNT +  >R ;
+
+\+ '(C") ' (C") TO '(C")
+
+: DEPTH ( -- n ) \ 94
+  SP@ SP0 @ - NEGATE  3 ARSHIFT ;
+
+\ T: ERASE 0 FILL ;
+
+: WCOUNT DUP W@ SWAP 2+ SWAP ;
+
+: SPACE BL EMIT ;
+
+: 0MAX 0 MAX ;
+
+: 3DUP DUP 2OVER ROT ;
+
+: BOUNDS OVER + SWAP ;
+
+: U<= U> 0= ;
+
+: CS-ROLL  2* 1+ DUP>R ROLL R> ROLL ;
+
+: D2*      ( D -- D*2 )        2DUP D+     ;
+: DABS     ( d -- ud )         DUP 0< IF DNEGATE THEN  ;
+
+: U/MOD 0 SWAP UM/MOD ;
+
+\ : U/ ( n1 n2 -- n1*n2 ) U/MOD  NIP ;
+
+\ : UMOD ( n1 n2 -- n1%n2 )  U/MOD DROP ;
+
+: MOVE ( addr1 addr2 u -- ) \ 94	
+  >R 2DUP SWAP R@ + U<
+  IF 2DUP U<
+     IF R> CMOVE> ELSE R> CMOVE THEN
+  ELSE R> CMOVE THEN ;
+
+255 CONSTANT MAXCOUNTED   \ maximum length of contents of a counted string
 
 
+: "CLIP"        ( a1 n1 -- a1 n1' )   \ clip a string to between 0 and MAXCOUNTED
+                MAXCOUNTED MIN 0 MAX ;
 
-CODE DLL_L
-        mov     %rsp,%rbx
-        and    $0x0F,%rbx
-        jz     3f
-        lea     -0x08(%rsp),%rsp
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        call   'LoadLibraryA  (%rip)
-        add    $0x20,%rsp
-        lea     0x08(%rsp),%rsp
-        ret
-3:      sub    $0x20,%rsp
-        mov     %rax,%rcx
-        call   'LoadLibraryA  (%rip)
-        add    $0x20,%rsp
-        ret
-END-CODE
+: PLACE         ( addr len dest -- )
+                SWAP "CLIP" SWAP
+                2DUP 2>R
+                CHAR+ SWAP MOVE
+                2R> C! ;
 
-CODE DLL_S
+: $!   PLACE ;
 
-        mov     %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        sub    $0x20,%rsp
-        mov     0x00(%rbp),%rcx
-        mov     %rax,%rdx
-        call   'GetProcAddress (%rip)
-        add    $0x20,%rsp
-	mov     %r12,%rsp
-        lea     0x08(%rbp),%rbp
-        ret
-END-CODE
+: +PLACE        ( addr len dest -- ) \ append string addr,len to counted
+                                     \ string dest
+                >R "CLIP" MAXCOUNTED  R@ C@ -  MIN R>
+                                        \ clip total to MAXCOUNTED string
+                2DUP 2>R
 
-CODE NXCALL0
-HERE TO _NXCALL0
-        mov     %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        call    %rax
-	mov     %r12,%rsp
-        ret
-END-CODE
+                COUNT + SWAP MOVE
+                2R> +! ;
 
-CODE NXCALL1
-HERE TO _NXCALL1
-        mov    %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        mov     0x00(%rbp),%rcx
-        call    %rax
-        lea     0x08(%rbp),%rbp
-	mov     %r12,%rsp
-        ret
-END-CODE
+: $+!  +PLACE ;
 
-CODE NXCALL2
-HERE TO _NXCALL2
-        mov     %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        mov     0x08(%rbp),%rcx
-        mov     0x00(%rbp),%rdx
-        call    %rax
-        lea     0x10(%rbp),%rbp
-	mov     %r12,%rsp
-        ret
-END-CODE
+: C+PLACE       ( c1 a1 -- )    \ append char c1 to the counted string at a1
+                DUP 1+! COUNT + 1- C! ;
 
-CODE NXCALL3
-HERE TO _NXCALL3
-        mov     %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        mov     0x10(%rbp),%rcx
-        mov     0x08(%rbp),%rdx
-        mov     0x00(%rbp),%r8
-        call    %rax
-        lea     0x18(%rbp),%rbp
-	mov     %r12,%rsp
-        ret
-END-CODE
-	
-CODE NXCALL4
-HERE TO _NXCALL4
-        mov     %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        mov     0x18(%rbp),%rcx
-        mov     0x10(%rbp),%rdx
-        mov     0x08(%rbp),%r8
-        mov     0x00(%rbp),%r9
-        call    %rax
-        lea     0x20(%rbp),%rbp
-	mov     %r12,%rsp
-        ret
+: $C+! C+PLACE  ;
+
+: +NULL         ( a1 -- )       \ append a NULL just beyond the counted chars
+                COUNT + 0 SWAP C! ;
 
 
-\ NXCALLS: dq   _NXCALL0,_NXCALL1,_NXCALL2,_NXCALL3,_NXCALL4
-5:
-    _NXCALL0 , _NXCALL1 ,  _NXCALL2 ,  _NXCALL3 , _NXCALL4 ,
-    
-    
-\  NXCALLS4
-4:        mov     %rax,%rbx
-        mov     0x00(%rbp),%rax
-        lea     0x08(%rbp),%rbp
-        jmp     5b (%rbx,8)
-	
-CODL NXCALL
-        cmp    $0x04,%rax
-	jle     4B
-        Push    %r13
-        mov     %rsp,%r12
-        lea     0x0(,%rax,8),%rbx
-        mov     0x00(%rbp),%r11
-        sub     %rbx,%rsp
-        and    $-0x10,%rsp
-        mov     %rbx,%r10
-        mov     (%r10,%rbp,1),%rcx
-        sub     $0x08,%r10
-        mov     (%r10,%rbp,1),%rdx
-        sub     $0x08,%r10
-        mov     (%r10,%rbp,1),%r8
-        sub     $0x08,%r10
-        mov     (%r10,%rbp,1),%r9
-        sub     $0x08,%r10
-        mov     $0x20,%r13
-4:      mov     (%r10,%rbp,1),%rax
-        mov     %rax,(%rsp,%r13,1)
-        add     $0x08,%r13
-        sub     $0x08,%r10
-        jNE     4B
-        $41  c, $FF  c, $D3 c, \ call    %r11   \ 418BDE 41 FF D3
-        lea     0x08(%rbx,%rbp,1),%rbp
-	mov     %r12,%rsp
-        pop     %r13
-        ret
-END-CODE
-	
+: zplace        \ caddr len zaddr --
+\ *G Copy the string caddr/len to zaddr as a 0 terminated string.
+  2dup + >r				\ save location of zero
+  swap move				\ copy string
+  0 r> c!				\ terminate afterwards in case of overlap
+;
 
-CODE TSTART
-        sub    $0x30,%rsp
-        movq    $0x0,%rcx
-        movq    $0x20000,%rdx
-        mov     %rax,%r8
-        mov     $0x0,%r9
-        movq    $0x0,0x20(%rsp)
-        movq    $0x0,0x28(%rsp)
-        call    'CreateThread  (%rip)
-        add    $0x30,%rsp
-        ret
-END-CODE
+: COMPARE ( addr1 u1 addr2 u2 --- diff )
+\ Compare two strings. diff is negative if addr1 u1 is smaller, 0 if it
+\ is equal and positive if it is greater than addr2 u2.
+
+  ROT 2DUP - >R        
+  MIN DUP IF
+   >R
+   BEGIN
+    OVER C@ OVER C@ - IF
+     SWAP C@ SWAP C@ -
+		 2RDROP	EXIT
+    THEN 
+    1+ SWAP 1+ SWAP
+    R> 1- DUP >R 0=
+   UNTIL R>
+  THEN DROP
+  2DROP R> NEGATE
+;
+
+: SCAN ( c-addr1 u1 c --- c-addr2 u2 )
+\ Find the first occurrence of character c in the string c-addr1 u1
+\ c-addr2 u2 is the remaining part of the string starting with that char.
+\ It is a zero-length string if c was not found.
+  BEGIN
+   OVER
+  WHILE
+   ROT DUP C@ >R OVER R> =
+   IF -ROT DROP
+   BREAK
+   1+ -ROT SWAP 1- SWAP
+  REPEAT DROP
+;
+
+: SEARCH ( c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag ) \ 94 STRING
+    2>R 2DUP
+    BEGIN
+      DUP 1+ R@ >
+    WHILE
+      OVER 2R@ TUCK COMPARE 0=
+      IF 2RDROP 2SWAP 2DROP TRUE EXIT THEN
+      1- SWAP 1+ SWAP
+    REPEAT 2RDROP 2DROP 0
+;
+
+: REL@ ( ADDR -- ADDR' )
+         DUP SL@ + ;
+
+: <'>
+R>  1+ DUP 4 + >R  REL@ 4 + ;
+
+T: >BODY 5 + ;
+
+$20 CONSTANT BL
+8 CONSTANT CELL
+0 CONSTANT FALSE
+-1 CONSTANT TRUE
 
 
+: CATCH ( i*x xt -- j*x 0 | i*x n ) \ 94 EXCEPTION
+\ Положить на стек исключений кадр перехвата исключительных ситуаций
+\ и выполнить токен xt (как по EXECUTE) таким образом, чтобы управление
+\ могло быть передано в точку сразу после CATCH, если во время выполнения
+\ xt выполняется THROW.
+\ Если выполнение xt заканчивается нормально (т.е. кадр исключений,
+\ положенный на стек словом CATCH не был взят выполнением THROW),
+\ взять кадр исключений и вернуть ноль на вершину стека данных,
+\ остальные элементы стека возвращаются xt EXECUTE. Иначе остаток
+\ семантики выполнения дается THROW.
+\  <SET-EXC-HANDLER>
 
-CODE ALLOCATE
-        sub    $0x20,%rsp
-        movq    $0x0,%rcx
-        mov     %rax,%rdx
-        mov     $0x1000,%r8
-        mov     $0x40,%r9
-        call    'VirtualAlloc (%rip)
-        add    $0x20,%rsp
-        lea     -0x08(%rbp),%rbp
-        mov     %rax,0x00(%rbp)
-        sub    $0x01,%rax
-        sbb     %rax,%rax
-        ret
-END-CODE
+  SP@ >R  HANDLER @  >R
+  RP@ HANDLER !
+  EXECUTE
+  R> HANDLER !
+  RDROP
+  0
+;
 
-CODE FREE
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        movq    $0x0,%rdx
-        mov     $0x8000,%r8
-        call    'VirtualFree (%rip)
-        add    $0x20,%rsp
-        mov     $0x0,%eax
-        ret
+' CATCH TO 'CATCH
 
-END-CODE
+: THROW
+\ Если любые биты n ненулевые, взять верхний кадр исключений со стека
+\ исключений, включая все на стеке возвратов над этим кадром. Затем
+\ восстановить спецификации входного потока, который использовался перед
+\ соответствующим CATCH, и установить глубины всех стеков, определенных
+\ в этом Стандарте, в то состояние, которое было сохранено в кадре
+\ исключений (i - это то же число, что и i во входных аргументах
+\ соответствующего CATCH), положить n на вершину стека данных и передать
+\ управление в точку сразу после CATCH, которое положило этот кадр
+\ исключений.
+\ Если вершина стека не ноль, и на стеке исключений есть кадр 
+\ исключений, то поведение следующее:
+\   Если n=-1, выполнить функцию ABORT (версию ABORT из слов CORE), 
+\   не выводя сообщений.
+\   Если n=-2, выполнить функцию ABORT" (версию ABORT" из слов CORE), 
+\   выводя символы ccc, ассоциированные с ABORT", генерирующим THROW.
+\   Иначе система может вывести на дисплей зависящее от реализации 
+\   сообщение об условии, соответствующем THROW с кодом n. Затем 
+\   система выполнит функцию ABORT (версию ABORT из CORE).
+  ?DUP
+  IF
+   ( SAVEERR )  HANDLER @ \ A@ 
+     ?DUP
+     IF
+      RP!
+        R> HANDLER !
+        R> SWAP >R
+        SP! DROP R>
+     ELSE
+\ FATAL-HANDLER
+ THEN
+  THEN
+;
 
-CODE SLEEP
-        mov     %rsp,%r12
-        sub    $0x20,%rsp
-        and    $-0x10,%rsp
-        sub    $0x20,%rsp
-        mov     %rax,%rcx
-        call   'Sleep  (%rip)
-        add    $0x20,%rsp
-	mov     %r12,%rsp
-        mov     0x00(%rbp),%rax
-        lea     0x08(%rbp),%rbp
-        ret
-END-CODE
+' THROW TO 'THROW 
+
+T: ABORT -1 THROW ;
+
+: ?THROW        \ k*x flag throw-code -- k*x|i*x n
+\ *G Perform a *\fo{THROW} of value *\i{throw-code} if flag is non-zero.
+  SWAP IF THROW THEN DROP
+;
+
+: SHORT? ( n -- -129 < n < 128 )
+  0x80 + 0x100 U< ;
+
+: LONG? ( n -- -2147483648<n<2147483647 )
+	$80000000 + $100000000 U< ;
+
+: HH.
+  DUP 0xF ANDC
+  IF DUP 0xF AND >R
+	4 RSHIFT
+	T_RECURSE R>
+  THEN
+    DUP 10 < 0= IF 7 + THEN 48 + EMIT
+;
+
+
+T: BYE 0 HALT ;
+
+
+: ASCII-Z     ( addr len buff -- buff-z )        \ make an ascii string
+   DUP >R $! R> COUNT OVER + 0 SWAP C! ;
+
+: ZCOUNT        \ zaddr -- zaddr len
+\ *G A version of *\fo{COUNT} for zero terminated strings, returning
+\ ** the address of the first character and the length.
+  dup
+  begin
+    dup c@ ( 0<> )
+   while
+     1+
+  repeat
+  over -
+;
+
+: ASCIIZ> ZCOUNT ;
+
+$400 VALUE /SysPad
+
+0 VALUE SysPadBuff
+0 VALUE SysPAD
+0 VALUE SysPadEdge
+
+: NEWSYSPADGET	\ u -- addr
+  dup /SysPad u>
+  IF  -419 throw  THEN
+
+  SysPad  SysPadEdge UMIN OVER - 
+  DUP SysPADBuff U<
+  IF DROP SysPadEdge OVER - THEN
+  NIP DUP TO SysPad
+
+;
+
