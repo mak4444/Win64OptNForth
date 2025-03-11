@@ -1,5 +1,5 @@
 \ Mihail Maksimov, forth@inbox.ru
-REQUIRE F7_EDIT ~mak\Edit.4
+REQUIRE F7_ED ~mak\Edit.4
 
 REQUIRE <DBG> ~mak\lib\dbg.f 
 
