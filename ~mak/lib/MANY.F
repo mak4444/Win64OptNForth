@@ -1,7 +1,6 @@
 
 : $=  ( a1 u1 a2 u2 -- flag )  COMPARE 0= ;
-: <NEXT>  BL WORD COUNT ;
-: PREPARSE >IN @ >R <NEXT> R> >IN ! ;
+: PREPARSE >IN @ >R PARSE-NAME R> >IN ! ;
 : MANY:  ( ... -- ... )   \ Usage: many <word> ... ;
    ' >R
    BEGIN
