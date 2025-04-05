@@ -136,14 +136,14 @@ VFXCODE L@
 	NEXT
 END-CODE
 
-\ ARM Forth word @   ( addr -- n )
-\ Fetch a value from addr
-VFXCODE @		( A -- N )
-	MOV     RAX, 0 [RAX]
-	NEXT
-END-CODE
 
-' @ TO 'GET
+
+
+
+
+
+
+
 
 VFXCODE C@		( A -- c )
 	MOVZX   EAX, Byte 0 [RAX]
@@ -265,10 +265,15 @@ VFXCODE 2@		( addr -- low32bits high32bits )
 	MOV     RDX, 8 [RAX]
 	LEA     RBP, -8 [RBP]
 	MOV     0 [RBP], RDX
+\ ARM Forth word @   ( addr -- n )
+\ Fetch a value from addr
+CODL @		( A -- N )
 	MOV     RAX, 0 [RAX]
-
 	NEXT
 END-CODE
+
+' @ TO 'GET
+
 
 VFXCODE 2!		( D A -- )
 	MOV     RDX, 0 [RBP]
@@ -339,7 +344,7 @@ VFXCODE MAX	( N1,N2 -- MAX )
 	NEXT
 END-CODE
 
-\ ÌÀÊÑÈÌÓÌ
+\ ÃŒÃ€ÃŠÃ‘ÃˆÃŒÃ“ÃŒ
 VFXCODE UMAX	( N1,N2 -- MAX )
 	CMP     RAX, 0 [RBP]
 	CMOVB   RAX, 0 [RBP]
@@ -669,6 +674,23 @@ VFXCODE UM/MOD
 	MOV     0 [RBP], RDX
 	NEXT
 ASM_END
+
+(*
+
+VFXCODE */MOD_ \ n1 n2 n3 -- rem quot                          6.1.0110
+\ *G Multiply n1 by n2 to give a double precision result, and then
+\ ** divide it by n3 returning the remainder and quotient. The point
+\ ** of this operation is to avoid loss of precision.
+     MOV RCX, RAX
+     MOV RAX, 0 [RBP]
+     IMUL 8 [RBP]
+     IDIV RCX
+     MOV 8 [RBP], RDX
+     LEA RBP, 8 [RBP]
+
+	NEXT
+ASM_END
+*)
 
 VFXCODE FM/MOD
         MOV RCX, RAX
@@ -1208,9 +1230,31 @@ END-CODE
 
 ' USER-CODE TO 'USER-CODE
 
-0 VALUE  H-STDIN    \ хэндл файла - стандартного ввода
-1 VALUE  H-STDOUT   \ хэндл файла - стандартного вывода
-1 VALUE  H-STDERR   \ хэндл файла - стандартного вывода ошибок
+VFXCODE USER-VALUE-CODE
+	LEA     RBP, -8 [RBP]
+	MOV     0 [RBP], RAX
+	POP     RAX
+	MOV     EAX, 0 [RAX]
+	ADD     RAX, R13
+	MOV     RAX, 0 [RAX] \ @
+	RET
+END-CODE
+
+VFXCODE TOUSER-VALUE-CODE
+	POP     RBX
+	MOV     EBX, 5 [RBX]
+	ADD     RBX, R13
+	MOV     0 [RBX], RAX
+	MOV     RAX, 0 [RBP] \ DROP
+	LEA     RBP, 8 [RBP]
+	RET
+END-CODE
+
+
+
+0 VALUE  H-STDIN    \ Ñ…ÑÐ½Ð´Ð» Ñ„Ð°Ð¹Ð»Ð° - ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½Ð¾Ð³Ð¾ Ð²Ð²Ð¾Ð´Ð°
+1 VALUE  H-STDOUT   \ Ñ…ÑÐ½Ð´Ð» Ñ„Ð°Ð¹Ð»Ð° - ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½Ð¾Ð³Ð¾ Ð²Ñ‹Ð²Ð¾Ð´Ð°
+1 VALUE  H-STDERR   \ Ñ…ÑÐ½Ð´Ð» Ñ„Ð°Ð¹Ð»Ð° - ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½Ð¾Ð³Ð¾ Ð²Ñ‹Ð²Ð¾Ð´Ð° Ð¾ÑˆÐ¸Ð±Ð¾Ðº
 
 
 VARIABLE KEY_BUF  0 , 0 , 0 ,
