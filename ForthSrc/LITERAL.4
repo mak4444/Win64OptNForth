@@ -1,4 +1,4 @@
-\ VECT <SET-EXC-HANDLER> \ установить обработчик аппаратных исключений
+\ VECT <SET-EXC-HANDLER> \ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚Ñ‡Ð¸Ðº Ð°Ð¿Ð¿Ð°Ñ€Ð°Ñ‚Ð½Ñ‹Ñ… Ð¸ÑÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ð¹
 
 
 T: HERE DP @ DUP TO :-SET ;
@@ -77,12 +77,14 @@ T: _COMPILE, ( cfa -- )
   HERE 4 + - L,
 ;
 
-T: COMPILE,
+T: OPT_COMPILE,
   ?CONST IF EXECUTE LIT, BREAK
   ?VAR	 IF EXECUTE ADDR, BREAK
   ?VALUE IF >BODY ADDR, 'GET INLINE, BREAK
 	INLINE? IF  INLINE, BREAK
 	_COMPILE, ;
+
+' OPT_COMPILE, ->DEFER COMPILE,
 
 : NUMBER,      ( d -- )
                 DOUBLE? 0= IF DROP THEN
