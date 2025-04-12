@@ -1,20 +1,20 @@
 BASE @
 
 HEX
-\ ďđĺôčęń     ęŕňĺăîđč˙
-\ CS          îďöč˙ ńňčë˙ ęëŕńńŕ
-\ IDI         čä.íîěĺđ čęîíęč
-\ IDC         čä.íîěĺđ ęóđńîđŕ
-\ WS          ńňčëü îęíŕ
-\ CW          îďöč˙ ńîçäŕíč˙ îęíŕ
-\ WM          ńîîáůĺíčĺ îęíŕ
-\ SND         îďöč˙ çâóęŕ
-\ DT          îďöč˙ đčńîâŕíč˙ ňĺęńňŕ
+\ префикс     категория
+\ CS          опция стиля класса
+\ IDI         ид.номер иконки
+\ IDC         ид.номер курсора
+\ WS          стиль окна
+\ CW          опция создания окна
+\ WM          сообщение окна
+\ SND         опция звука
+\ DT          опция рисования текста
 
 \- IMAGE-BASE 0 GetModuleHandleA CONSTANT IMAGE-BASE
 
-IMAGE-BASE CONSTANT HINST  \ Instance ňĺęóůĺăî ďđčëîćĺíč˙
-       0 CONSTANT HCON   \ hwnd ăëŕâíîăî îęíŕ ďđčëîćĺíč˙
+IMAGE-BASE CONSTANT HINST  \ Instance текущего приложения
+       0 CONSTANT HCON   \ hwnd главного окна приложения
        2 CONSTANT CS_HREDRAW
        1 CONSTANT CS_VREDRAW
        8 CONSTANT CS_DBLCLKS
@@ -66,7 +66,7 @@ IMAGE-BASE CONSTANT HINST  \ Instance ňĺęóůĺăî ďđčëîćĺíč˙
 #define WS_TILEDWINDOW      WS_OVERLAPPEDWINDOW
 
 \ /*
-\  * Extended Window Styles   \ äîáŕâëĺíî EX_ 16-ĚŔĐ-2000
+\  * Extended Window Styles   \ добавлено EX_ 16-МАР-2000
 \
 \  */
 
@@ -101,7 +101,7 @@ IMAGE-BASE CONSTANT HINST  \ Instance ňĺęóůĺăî ďđčëîćĺíč˙
 CONSTANT /RECT
 
 
-\ ńňđóęňóđŕ ŕë˙ paint
+\ структура аля paint
 0 
 4 FIELD PS.hdc
 4 FIELD PS.fErase
