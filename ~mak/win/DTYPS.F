@@ -1,19 +1,20 @@
 BASE @
 
 HEX
-\ префикс     категория
-\ CS          опция стиля класса
-\ IDI         ид.номер иконки
-\ IDC         ид.номер курсора
-\ WS          стиль окна
-\ CW          опция создания окна
-\ WM          сообщение окна
-\ SND         опция звука
-\ DT          опция рисования текста
+\ ДЏД‘ДєГґДЌД™Е„     Д™Е•Е€ДєДѓГ®Д‘ДЌЛ™
+\ CS          Г®ДЏГ¶ДЌЛ™ Е„Е€ДЌГ«Л™ Д™Г«Е•Е„Е„Е•
+\ IDI         ДЌГ¤.Г­Г®Д›ДєД‘ ДЌД™Г®Г­Д™ДЌ
+\ IDC         ДЌГ¤.Г­Г®Д›ДєД‘ Д™ГіД‘Е„Г®Д‘Е•
+\ WS          Е„Е€ДЌГ«Гј Г®Д™Г­Е•
+\ CW          Г®ДЏГ¶ДЌЛ™ Е„Г®Г§Г¤Е•Г­ДЌЛ™ Г®Д™Г­Е•
+\ WM          Е„Г®Г®ГЎЕЇДєГ­ДЌДє Г®Д™Г­Е•
+\ SND         Г®ДЏГ¶ДЌЛ™ Г§ГўГіД™Е•
+\ DT          Г®ДЏГ¶ДЌЛ™ Д‘ДЌЕ„Г®ГўЕ•Г­ДЌЛ™ Е€ДєД™Е„Е€Е•
 
-IMAGE-BASE CONSTANT HINST  \ Instance текущего приложения
-       0 CONSTANT HCON   \ hwnd главного окна приложения
-       4 CONSTANT CELL
+\- IMAGE-BASE 0 GetModuleHandleA CONSTANT IMAGE-BASE
+
+IMAGE-BASE CONSTANT HINST  \ Instance Е€ДєД™ГіЕЇДєДѓГ® ДЏД‘ДЌГ«Г®Д‡ДєГ­ДЌЛ™
+       0 CONSTANT HCON   \ hwnd ДѓГ«Е•ГўГ­Г®ДѓГ® Г®Д™Г­Е• ДЏД‘ДЌГ«Г®Д‡ДєГ­ДЌЛ™
        2 CONSTANT CS_HREDRAW
        1 CONSTANT CS_VREDRAW
        8 CONSTANT CS_DBLCLKS
@@ -65,7 +66,7 @@ IMAGE-BASE CONSTANT HINST  \ Instance текущего приложения
 #define WS_TILEDWINDOW      WS_OVERLAPPEDWINDOW
 
 \ /*
-\  * Extended Window Styles   \ добавлено EX_ 16-МАР-2000
+\  * Extended Window Styles   \ Г¤Г®ГЎЕ•ГўГ«ДєГ­Г® EX_ 16-ДљЕ”Дђ-2000
 \
 \  */
 
@@ -93,21 +94,21 @@ IMAGE-BASE CONSTANT HINST  \ Instance текущего приложения
 #define WS_EX_APPWINDOW         0x00040000
 
 0 
-CELL FIELD RECT.left
-CELL FIELD RECT.top
-CELL FIELD RECT.right
-CELL FIELD RECT.bottom
+4 FIELD RECT.left
+4 FIELD RECT.top
+4 FIELD RECT.right
+4 FIELD RECT.bottom
 CONSTANT /RECT
 
 
-\ структура аля paint
+\ Е„Е€Д‘ГіД™Е€ГіД‘Е• Е•Г«Л™ paint
 0 
-CELL FIELD PS.hdc
-CELL FIELD PS.fErase
-CELL FIELD PS.rcPaint
-CELL FIELD PS.fRestore
-CELL FIELD PS.fIncUpdate
-CELL FIELD PS.rgbReserved  31 +
+4 FIELD PS.hdc
+4 FIELD PS.fErase
+4 FIELD PS.rcPaint
+4 FIELD PS.fRestore
+4 FIELD PS.fIncUpdate
+4 FIELD PS.rgbReserved  31 +
 CONSTANT /PS
 
 0
@@ -202,4 +203,3 @@ CONSTANT /POINT
 #define IDC_APPSTARTING     32650
 
 BASE !
-\EOF
