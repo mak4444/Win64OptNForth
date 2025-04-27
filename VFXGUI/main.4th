@@ -1,9 +1,10 @@
 \ from https://www.mpeforth.com/software/pc-systems/vfx-forth-for-windows
 .( MAIN.4TH ) CR
-REQUIRE ENS-CASE ~mak\case.f
+REQUIRE END-CASE ~mak\case.f
 REQUIRE FILE-SIZE ~mak/lib/ftools.4 
 REQUIRE (*	~af\lib\comments.f \ *)
 REQUIRE REPLACE-WORD lib/ext/patch.f
+
 
 [IFNDEF] COMCTL32DLL
 Z" Comctl32.DLL" DLL_L
@@ -30,6 +31,7 @@ YDP @ 0= [IF] 0xf0000 ALLOCATE THROW DUP  YDP0 ! YDP ! [THEN]
  REQUIRE CASE-INS lib\ext\caseins.f
  REQUIRE { ~mak\locals.f
 
+
 \- #define : #define  HEADER  CONSTANT-CODE COMPILE,  0 PARSE EVALUATE , ;
 \- ?#define : ?#define >IN @  POSTPONE [DEFINED]  IF DROP POSTPONE \ BREAK >IN ! #define  ;
 
@@ -41,22 +43,6 @@ YDP @ 0= [IF] 0xf0000 ALLOCATE THROW DUP  YDP0 ! YDP ! [THEN]
    ALLOT
    R> CLOSE-FILE THROW
 ;
-
-CREATE TlsIndexS TlsIndex@ ,
-
-: TlsIndex><
- TlsIndexS @ TlsIndex@
- TlsIndexS ! TlsIndex!
- ;
-
-: TlsIndex>
- TlsIndexS @ TlsIndex!
- ;
-
-\ $10000 ALLOCATE THROW  USER-SET
-
-\ ~mak\gasm64\disgasm.4 
-\ ~mak\gasm64\gasm64.4 
 
 CREATE ^NULL 0 ,
 CREATE CNULL 0 ,
@@ -99,11 +85,6 @@ constant /libstr
 
 VARIABLE IP-HANDLE
 VARIABLE OP-HANDLE
-  0
-  cell  field gen-handle
-  cell  field gen-vector
-  0     field gen-private
-DROP
 
 VARIABLE OP-LINE#
 
@@ -120,6 +101,12 @@ VARIABLE OP-LINE#
 ?#define WS_CHILD	$40000000
 ?#define CW_USEDEFAULT	$80000000
 
+
+?#define cmdInclude $444
+?#define cmdBye $445
+?#define cmdRun $446
+
+
 0 VALUE hWndRichEdit
  VARIABLE GSID $100 ALLOT
 
@@ -128,6 +115,9 @@ VARIABLE OP-LINE#
 -1 VALUE WantStatusbar?
 
 VARIABLE $findmsgstring#
+
+REQUIRE vaultWnd VFXGUI\vault.4 
+0 VALUE ScriptRUN?  
 
 VFXGUI/kernel64.fth
 VFXGUI\winstrct.fth 
@@ -139,7 +129,14 @@ VFXGUI\richedit.fth
 VFXGUI\TermIDE.fth
 VFXGUI\window.fth
 
-: GR-ACCEPT GSID richedit-ACCEPT- ;
+
+: GR-ACCEPT GSID richedit-ACCEPT-
+ ScriptRUN?
+ IF  DROP 0 TO ScriptRUN?
+     S" vault-script.f" INCLUDED
+   0
+ THEN
+ ;
 : GR-KEY  GSID richedit-KEY- ;
 : GR-KEY? GSID richedit-KEY?- ;
 : GR-EMIT GSID richedit-EMIT- ;

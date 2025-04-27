@@ -1,0 +1,199 @@
+
+[IFNDEF] USER32DLL
+Z" USER32.DLL" DLL_L
+DUP 0= [IF] .( USER32.DLL LOAD ERROR) ABORT [THEN]
+CONSTANT USER32DLL
+[THEN]
+
+[IFNDEF] GDI32DLL
+Z" Gdi32.DLL" DLL_L
+DUP 0= [IF] .( Gdi32.DLL LOAD ERROR) ABORT [THEN]
+CONSTANT GDI32DLL
+[THEN]
+
+
+?#define WS_EX_CLIENTEDGE	$200
+
+?#define WM_SETFONT	0x0030
+?#define WM_USER       0x0400
+?#define WM_SETTEXT	$C
+?#define WM_GETTEXT	$D
+?#define WM_GETTEXTLENGTH $E
+?#DEFINE WM_MOUSEMOVE $200
+?#DEFINE WM_LBUTTONDOWN $201
+?#DEFINE WM_LBUTTONUP $202
+?#DEFINE WM_CAPTURECHANGED $215
+
+
+?#define SW_SHOW	5
+
+?#define ES_MULTILINE        0x0004
+?#define ES_AUTOVSCROLL      0x0040
+?#define ES_AUTOHSCROLL      0x0080
+
+
+?#define EM_EXLIMITTEXT		WM_USER  53 +
+
+?#define ANSI_FIXED_FONT $B
+
+?#DEFINE IDC_SIZEWE $7F84
+?#DEFINE IDC_SIZENS $7F85
+
+?#define GWLP_WNDPROC	-4
+
+USER32DLL WAPI12: CreateWindowExA	CreateWindowExA
+USER32DLL WAPI1: UpdateWindow UpdateWindow
+USER32DLL WAPI2: ShowWindow	ShowWindow
+USER32DLL WAPI1: GetDC	GetDC
+USER32DLL WAPI2: ReleaseDC	ReleaseDC
+GDI32DLL  WAPI1: GetStockObject	GetStockObject
+USER32DLL WAPI4: SendMessageA	SendMessageA
+USER32DLL WAPI2: LoadCursorA LoadCursorA
+USER32DLL WAPI1: SetCursor SetCursor
+USER32DLL WAPI0: ReleaseCapture ReleaseCapture
+USER32DLL WAPI4: DefWindowProcA DefWindowProcA
+USER32DLL WAPI3: SetWindowLongPtrA SetWindowLongPtrA
+
+
+0 VALUE vaultWnd
+
+120 VALUE vaultSIZE
+0 VALUE vaultOFFSET
+
+: vault_CREATE
+  { hwnd \  hdc  -- EdHWnd }
+ WS_EX_CLIENTEDGE
+\ Z" EDIT" 
+ Z" RichEdit"
+ 0 
+ WS_CHILD  WS_VISIBLE OR
+ WS_HSCROLL OR WS_VSCROLL OR 
+ ES_AUTOHSCROLL OR ES_AUTOVSCROLL OR
+ ES_MULTILINE OR
+	0  0  0  0   hwnd  0 IMAGE-BASE 0
+ CreateWindowExA  TO vaultWnd
+\ DUP FindOwner !
+
+      vaultWnd UpdateWindow   DROP
+      vaultWnd SW_SHOW ShowWindow  DROP
+      hwnd GetDC -> hdc
+\      logfont CreateFontIndirectA TO hFont
+\      vaultWnd SetFocus DROP
+
+    WM_SETFONT
+    ANSI_FIXED_FONT getstockobject
+    1 SendMessageA drop
+
+	vaultWnd EM_EXLIMITTEXT 0 100000000
+	SendMessageA  DROP
+
+\   vaultWnd  GWLP_WNDPROC ['] MyEdWndProc  SetWindowLongPtrA TO EdWndProc
+
+      hwnd hdc ReleaseDC DROP
+;
+
+: vault_LOAD
+
+  	 vaultWnd WM_SETTEXT 0 Z" Content" SendMessageA DROP
+
+
+;
+
+H-STDOUT VALUE V-CONS-STDOUT
+
+: vaultSaveScript { \ SizeEd Content fid -- }
+  \ получаем содержимое окна Script
+\  	 vaultWnd WM_SETTEXT 0 Z" vaultSaveScript" SendMessageA DROP
+
+
+  vaultWnd WM_GETTEXTLENGTH 0 0  SendMessageA 1+ TO SizeEd
+
+\     V-CONS-STDOUT TO H-STDOUT  ." SizeEd=" SizeEd H.  CR     0 TO H-STDOUT
+
+  SizeEd ALLOCATE THROW TO Content
+  vaultWnd WM_GETTEXT SizeEd Content SendMessageA DROP
+  \ открываем файл
+  S" vault-script.f"  W/O CREATE-FILE THROW TO fid
+  \ записываем код в файл
+  Content SizeEd 1- fid WRITE-FILE THROW
+  \ закрываем файл и буфер
+  Content FREE THROW
+  fid CLOSE-FILE THROW
+;
+
+
+
+: vaultLoadScript { \ SizeEd Content fid -- }
+  S" vault-script.f"  R/O OPEN-FILE 0= IF
+    DUP TO fid
+    FILE-SIZE THROW DROP ?DUP IF
+      1+ DUP TO SizeEd
+      ALLOCATE THROW DUP TO Content
+      SizeEd 1- fid READ-FILE 2DROP
+      vaultWnd WM_SETTEXT 0 Content SendMessageA DROP
+      Content FREE THROW
+    THEN
+    fid CLOSE-FILE THROW
+  ELSE
+    DROP
+  THEN
+;
+
+\ EOF Splitter
+
+USER32DLL WAPI1: SetCapture SetCapture
+
+
+\- LAST-NON 0 VALUE LAST-NON
+\- :NONAME : :NONAME ( C: -- colon-sys ) ( S: -- xt ) \ 94 CORE EXT
+\- :NONAME  HERE DUP TO LAST-NON [COMPILE] ] ;
+
+
+\- HIWORD : HIWORD   $10 rshift  $FFFF and ;
+
+
+VARIABLE spdrag
+0 VALUE SP_hwnd
+
+:NONAME		{ hwnd msg wpar lpar \   res -- res }
+\     V-CONS-STDOUT TO H-STDOUT  ." Splittermsg=" msg  H.  CR     0 TO H-STDOUT
+
+  V-CONS-STDOUT TO H-STDOUT
+\ CR   ." ---hwnd=" hwnd H. ." msg=" msg H. 
+\      ." wpar=" wpar H. ." lpar=" lpar H.
+
+
+     0 TO H-STDOUT
+
+ msg
+ CASE
+WM_MOUSEMOVE OF
+	      0 IDC_SIZENS LoadCursorA SetCursor DROP
+	    spdrag @ IF     $8000 lpar HIWORD $8000 XOR - TO vaultOFFSET
+		&hWndMain @ $7777 0 0  SendMessageA DROP
+        	     THEN
+	ENDOF
+
+WM_LBUTTONDOWN		OF  SP_hwnd SetCapture DROP  TRUE spdrag !	ENDOF
+WM_LBUTTONUP		OF  ReleaseCapture DROP	ENDOF
+WM_CAPTURECHANGED	OF  FALSE spdrag !	ENDOF
+      hwnd msg wpar lpar DefWindowProcA -> res
+ END-CASE
+ res
+;
+WNDPROC: Splitter_Proc
+
+: Splitter_CREATE  { hwnd \  hdc  -- EdHWnd }
+
+ 0
+ Z" BUTTON"
+\ Z" STATIC"
+
+   ^NULL
+	WS_CHILD  WS_VISIBLE OR
+	0  0  0  0   hwnd  0 IMAGE-BASE 0
+	CreateWindowExA TO SP_hwnd
+
+	SP_hwnd  GWLP_WNDPROC ['] Splitter_Proc  SetWindowLongPtrA DROP
+
+;

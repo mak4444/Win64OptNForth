@@ -243,7 +243,7 @@ $8000 constant re-Rev2-mask		\ set for June 2012 changes
 ;
 
 : DoPaste-	{ sid -- }
-  sid gen-handle @ OpenClipBoard- if
+  sid  @ OpenClipBoard- if
     CF_TEXT GetClipboardData- ?dup if
       sid richedit-Ififo PASTE>FIFO-
     then
@@ -356,22 +356,22 @@ $8000 constant re-Rev2-mask		\ set for June 2012 changes
   hparent
   0 0 GetModuleHandleA 0
   CreateWindowExA ?dup if
-    sid gen-handle !                    \ store window handle
+    sid  !                    \ store window handle
 
-    sid gen-handle @ EM_EXLIMITTEXT 0 /reBuffer SendMessageA drop
+    sid  @ EM_EXLIMITTEXT 0 /reBuffer SendMessageA drop
 
-    sid gen-handle @ GWLP_WNDPROC
+    sid  @ GWLP_WNDPROC
  ['] neweditboxproc-
     SetWindowLongPtrA oldeditboxproc !
 
-    sid gen-handle @                    \ set SID property to SID itself
+    sid  @                    \ set SID property to SID itself
     z" SID" sid SetPropA 0= if
       sid -2  exit
     then
 
     sid clear-history-                   \ erase history buffer
 
-    sid gen-handle @                    \ set default font
+    sid  @                    \ set default font
     WM_SETFONT
     ANSI_FIXED_FONT getstockobject
     1 SendMessageA drop
@@ -457,7 +457,7 @@ $8000 constant re-Rev2-mask		\ set for June 2012 changes
 : richedit-flushOP-      { sid | hwnd *fifo -- ior }	\ SFP013
   sid 0=				\ check for valid SID ; SFP026
   if  0 exit  endif
-  sid gen-handle @			\ check for valid handle
+  sid  @			\ check for valid handle
   dup 0= if  drop 0 exit  endif
   dup -1 = if  drop 0 exit  endif
   -> hwnd
@@ -502,7 +502,7 @@ $8000 constant re-Rev2-mask		\ set for June 2012 changes
 : GetCurrLine-	\ caddr len sid --
 \ The returned line includes the trailing CR/LFs.
   { caddr len sid | hRE -- }
-  sid gen-handle @ -> hRE
+  sid  @ -> hRE
   len 1- caddr w!
   hRE EM_LINEFROMCHAR -1 0 SendMessageA		\ line of current selection
   hRE EM_GETLINE rot caddr SendMessageA	 	\ ptr -> 0 terminated Line
@@ -521,7 +521,7 @@ $8000 constant re-Rev2-mask		\ set for June 2012 changes
 : replace-last-line-	\ caddr u offset sid -- ; replace last line
 \ Place caddr u text on current line of device at starting position offset.
   { | hwndE text[ 256 ] start length spos -- }
-  gen-handle @ -> hwndE					\ edit box handle
+   @ -> hwndE					\ edit box handle
   -> spos						\ starting position offset ; SFP007
   255 min text[ zplace					\ make zero terminated
   hwndE EM_SETSEL -1 -1 SendMessageA drop		\ end of display
@@ -640,7 +640,7 @@ variable sttstv
 ;
 
 : backup-last-line-	\ backup sid -- ; set cursor backup chars from end
-  gen-handle @ >r				\ edit box handle
+   @ >r				\ edit box handle
   r@ EM_SETSEL -1 -1 SendMessageA drop		\ go to end of display
   r@ EM_LINEINDEX -1 0 SendMessageA 		\ find start of line
   r@ EM_LINELENGTH 2 pick 0 SendMessageA		\ find length of line

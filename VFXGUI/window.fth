@@ -4,6 +4,14 @@ USER32DLL WAPI2: LoadIconA	LoadIconA
 USER32DLL WAPI4: MessageBoxA	MessageBoxA
 USER32DLL WAPI2: SetWindowPlacement- SetWindowPlacement
 
+USER32DLL WAPI0: CreateMenu	CreateMenu
+USER32DLL WAPI0: CreatePopupMenu	CreatePopupMenu
+USER32DLL WAPI4: AppendMenuA	AppendMenuA
+
+?#define MF_STRING	0x00000000
+?#define MF_POPUP	0x00000010
+
+
 ?#define CS_VREDRAW          0x0001
 ?#define CS_HREDRAW          0x0002
 
@@ -83,6 +91,25 @@ buildWINDOW- IWINDOW+ ERASE
   then
 ;
 
+
+: GUI_CreateMainMenu ( -- hmenu )
+
+   CreateMenu   >R
+
+  CreatePopupMenu >R
+
+ R@ MF_STRING cmdInclude Z" &Include"	AppendMenuA DROP \  APPENDM DROP
+ R@ MF_STRING cmdBye	Z" &BYE"	AppendMenuA DROP
+
+ R>  R@  MF_POPUP  ROT Z" &File" AppendMenuA DROP
+
+
+ R@ MF_STRING cmdRun	Z" &Script"	AppendMenuA DROP
+
+
+ R>
+;
+
 : CREATEPARENTWINDOW-	\  -- handle
 ( +G Given a IWINDOW structure create the Window as a PARENT            )
 	0	\ Exstyle
@@ -94,7 +121,7 @@ buildWINDOW- IWINDOW+ ERASE
 	$64	\ Width
 	$64	\ Height
  0
- 0
+  GUI_CreateMainMenu
  IMAGE-BASE
  0 CreateWindowExA
   dup 0= if
