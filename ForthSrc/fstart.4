@@ -1,10 +1,29 @@
 
+: SAVE (  ADDR LEN -- )
+  R/W CREATE-FILE THROW >R
+  IMAGE-BASE HERE OVER -  R@ WRITE-FILE THROW 
+  R> CLOSE-FILE THROW
+;
+
 : TITLE CR
   ." ANS FORTH 94" CR
   ." A.Cherezov  http://www.forth.org.ru/" CR
   ." M.Maksimov  https://github.com/mak4444"  CR
 ;
 
+
+VARIABLE COLDCHAIN
+CREATE COLDCHAINCOUNT COLDCHAIN ,
+
+: ATCOLD        \ xt --
+\ Specify a new XT to execute when the Cold chain sequence is run.
+  HERE DUP COLDCHAINCOUNT @ ! COLDCHAINCOUNT !  0 , , ;
+ 
+: WALKCOLDCHAIN         \ --
+   COLDCHAIN @ DUP 0= IF DROP BREAK
+   BEGIN DUP CELL+ PERFORM
+		@ DUP 0=  
+   UNTIL DROP  ;
 
 : COMMANDLINE ( -- ADDR LEN )
   COMMAND_LINE
@@ -20,6 +39,11 @@
   RP@ RP0 !
   DECIMAL
 
+  0 HANDLER !
+  SAVEERR? 0!
+ 0 TO SOURCE-ID
+  ATIB TO TIB
+
 \  ORIGVIEWLINK TO VIEW_LINK
 
 
@@ -30,6 +54,7 @@ HERE DUP TO SYSPADBUFF TO SYSPAD
 /SYSPAD ALLOT
 HERE TO SYSPADEDGE
 
+ WALKCOLDCHAIN
 
  COMMANDLINE ?DUP
    IF ['] EVALUATE CATCH    ?DUP
