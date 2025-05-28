@@ -1,3 +1,14 @@
 VFXGUI/main.4th
-\ tools/spf_words.f 
- GUISTART \ CREATEPARENTWINDOW-
+
+ GUISTART
+
+\ EOF
+
+' InitControls ATCOLD
+
+' GUISTART ATCOLD
+
+  CC_INIT OFF
+ S" WForth64.EXE" SAVE
+  CC_INIT ON
+
