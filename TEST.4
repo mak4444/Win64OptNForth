@@ -1,0 +1,22 @@
+REQUIRE DISP ~mak/amd64/disasm.fs
+
+: /STRING ( addr len n -- addr' len' ) ROT OVER + -ROT - ; \ best if code 
+
+: SCAN (  addr len char -- addr' len')
+    >R                  \ put char on return stack
+    BEGIN
+      DUP
+    WHILE ( len<>0)    
+      OVER C@ R@ <>     \ fetch char, compare to return stack  
+    WHILE ( R@<>char)   
+      1 /STRING         \ cut off the first character. (does addr+1, len-1)
+    REPEAT
+    THEN
+    R> DROP 
+;
+.( /STRING disasm) CR
+.( press any key, q - exit )
+' /STRING DISP CR
+.( SCAN disasm) CR
+.( press any key, q - exit )
+' SCAN DISP CR
