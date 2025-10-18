@@ -569,6 +569,7 @@ http://www.sandpile.org/x86/mode.htm
 \ **   next,
 \ ** end-code
 
+
 REQUIRE END-CASE ~mak\case.f
 
 \- >= : >= < 0= ;
@@ -1429,12 +1430,12 @@ hex
   mode2 r/i/d? must-be                  \ error if not
 ;
 
-[undefined] either= [if]
+[UNDEFINED] either= [IF]
 : either=       \ n a b -- t/f ; true if n=a or n=b
   2 pick = -rot                 \ n, b
   =  or                         \ n, a
 ;
-[then]
+[THEN]
 : r1=16/64	\ -- ; error if not 16 or 64 bit data
   b/w/l/x1 @ 1 3 either= must-be
 ;
@@ -4244,4 +4245,3 @@ EXPORT
 : END-CODE ASM_END ;
 
 ;MODULE
-
