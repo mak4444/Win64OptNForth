@@ -136,15 +136,6 @@ VFXCODE L@
 	NEXT
 END-CODE
 
-
-
-
-
-
-
-
-
-
 VFXCODE C@		( A -- c )
 	MOVZX   EAX, Byte 0 [RAX]
 	NEXT
@@ -1374,6 +1365,11 @@ CODE COMMAND_LINE
 END-CODE
 	
 CODE ZOPEN-FILE
+
+        mov     %rsp,%r12
+        sub    $0x20,%rsp
+        and    $-0x10,%rsp
+
         sub    $0x40,%rsp
         mov     0x00(%rbp),%rcx
         mov     %rax,%rdx
@@ -1389,11 +1385,18 @@ CODE ZOPEN-FILE
         xor     $0x7FFFFFFF,%rax
         sub    $0x01,%rax
         sbb     %rax,%rax
+	
+	mov     %r12,%rsp
+	
         ret
 
 END-CODE
 	
 CODE ZOPEN-FILE-SHARED
+        mov     %rsp,%r12
+        sub    $0x20,%rsp
+        and    $-0x10,%rsp
+
         sub    $0x40,%rsp
         mov     0x00(%rbp),%rcx
         mov     %rax,%rdx
@@ -1409,10 +1412,16 @@ CODE ZOPEN-FILE-SHARED
         xor     $0x7FFFFFFF,%rax
         sub    $0x01,%rax
         sbb     %rax,%rax
+	
+	mov     %r12,%rsp
         ret
 END-CODE
  	
 CODE ZCREATE-FILE
+        mov     %rsp,%r12
+        sub    $0x20,%rsp
+        and    $-0x10,%rsp
+
         sub    $0x40,%rsp
         mov     0x00(%rbp),%rcx
         mov     %rax,%rdx
@@ -1428,10 +1437,16 @@ CODE ZCREATE-FILE
         xor     $0x7FFFFFFF,%rax
         sub    $0x01,%rax
         sbb     %rax,%rax
+	
+	mov     %r12,%rsp	
         ret
 END-CODE
 	
 CODE ZCREATE-FILE-SHARED
+        mov     %rsp,%r12
+        sub    $0x20,%rsp
+        and    $-0x10,%rsp
+
         sub    $0x40,%rsp
         mov     0x00(%rbp),%rcx
         mov     %rax,%rdx
@@ -1447,15 +1462,23 @@ CODE ZCREATE-FILE-SHARED
         xor     $0x7FFFFFFF,%rax
         sub    $0x01,%rax
         sbb     %rax,%rax       
+
+	mov     %r12,%rsp	
         ret
 END-CODE
 	
 CODE CLOSE-FILE
+        mov     %rsp,%r12
+        sub    $0x20,%rsp
+        and    $-0x10,%rsp
+
         sub    $0x20,%rsp
         mov     %rax,%rcx
         call    'CloseHandle  (%rip)
         add    $0x20,%rsp
         movq    $0x0,%rax
+	
+	mov     %r12,%rsp		
         ret
 END-CODE
 
