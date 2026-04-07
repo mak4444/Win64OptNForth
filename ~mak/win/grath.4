@@ -308,11 +308,14 @@ DROP \  0= ABORT" #Class was not registered!"
      GrathRegisterClass
 
 
-: TASK_GRATH
-[ $48 C, $81 C, $EC C,  $3000 L, ] \    subq    $0x18000,%rsp  
-  CALLBACKIN
-   DECIMAL
+[IFNDEF] TASK:
+: TASK: :
+ $48 C, $81 C, $EC C,  $3000 L,  \    subq    $0x18000,%rsp  
+ [']  CALLBACKIN COMPILE,
+ ;
+[THEN]
 
+TASK: TASK_GRATH    DECIMAL
  0
   WinClassName
   DUP
