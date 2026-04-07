@@ -560,9 +560,13 @@ CREATE MSG1  /MSG ALLOT
 
 ;
 
-: TASK_EDIT \ RP@  444 - SP!
-[ $48 C, $81 C, $EC C,  $3000 L, ] \    subq    $0x18000,%rsp  
-  CALLBACKIN
+[IFNDEF] TASK:
+: TASK: :
+ $48 C, $81 C, $EC C,  $3000 L,  \    subq    $0x18000,%rsp  
+ [']  CALLBACKIN COMPILE,  ;
+[THEN]
+
+TASK: TASK_EDIT \ RP@  444 - SP!
   DECIMAL
   EDIT-GO
  ;
