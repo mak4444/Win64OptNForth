@@ -75,7 +75,7 @@ $4000	IATBL	SEG: .idata
 
 
 : TSAVE (  ADDR LEN -- )
-  R/W CREATE-FILE THROW >R
+  W/O CREATE-FILE THROW >R
  ." TS="
   .forth $14 + DUP H. .forth M@ DUP H. T> OVER -  DUP H.  R@ WRITE-FILE THROW cr
 
