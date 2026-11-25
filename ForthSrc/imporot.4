@@ -10,10 +10,12 @@
  ZSTR>, USER32.dll
 
  HERE \ Symbol
+ NFUNK> AddVectoredExceptionHandler
  NFUNK> CloseHandle
  NFUNK> CreateFileA
  NFUNK> CreateThread
  NFUNK> ExitProcess
+  NFUNK> ExitThread
  NFUNK> GetCommandLineA
  NFUNK> GetProcAddress
  NFUNK> GetStdHandle
@@ -28,11 +30,13 @@
  HERE DUP TIMAGE-BASE -	TO intbl_k 2DUP	NFUNKS
    HERE TIMAGE-BASE -	TO iatbl_k \ 	NFUNKS
 
-DROP \ Symbol 
+DROP \ Symbol
+HERE TO 'AddVectoredExceptionHandler ,NEXTFUNK
 HERE TO 'CloseHandle		,NEXTFUNK
 HERE TO 'CreateFileA            ,NEXTFUNK
 HERE TO 'CreateThread           ,NEXTFUNK
 HERE TO 'ExitProcess            ,NEXTFUNK
+HERE TO 'ExitThread             ,NEXTFUNK
 HERE TO 'GetCommandLineA        ,NEXTFUNK
 HERE TO 'GetProcAddress         ,NEXTFUNK
 HERE TO 'GetStdHandle           ,NEXTFUNK

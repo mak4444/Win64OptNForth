@@ -58,9 +58,11 @@
 
 0x51A0C0 VALUE 'Beep
 0 VALUE 'CloseHandle
+0 VALUE 'AddVectoredExceptionHandler
 0x51A0D0 VALUE 'CreateFileA
 0x51A0D8 VALUE 'CreateThread
 0x51A0E0 VALUE 'ExitProcess
+0 VALUE 'ExitThread
 0x51A0E8 VALUE 'GetCommandLineA
 0x51A0F0 VALUE 'GetProcAddress
 0 VALUE 'GetStdHandle

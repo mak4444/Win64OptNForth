@@ -1,0 +1,88 @@
+\ Перехват аппаратных исключений как в SP-Forth (src\win\spf_win_except.f)
+\ (EXC) - векторный обработчик исключений (VEH), x64-аналог кадра FS:[0] из SP-Forth.
+\ Если установлен кадр CATCH (HANDLER<>0) и этот кадр лежит на стеке текущей нити,
+\ обработчик переписывает CONTEXT нити ровно в то состояние, которое создал бы THROW:
+\   HANDLER = [H]        восстановление предыдущего кадра
+\   Rip     = [H+16]     точка возврата из THROW
+\   Rsp     = H+24
+\   Rbp     = [H+8]+8    как SP!: стек данных без xt
+\   Rax     = код исключения (знакорасширенный)
+\ и возвращает -1 = EXCEPTION_CONTINUE_EXECUTION (проверено экспериментально).
+\ Кадра нет - 0 = EXCEPTION_CONTINUE_SEARCH (идём дальше по цепочке, к WER).
+\ Ctrl+C (0xC000013A, wine) - ExitProcess, как HALT в SP-Forth.
+\ Кадр на чужом стеке (другая нить) - EXCEPTION_CONTINUE_SEARCH.
+\ ВНИМАНИЕ 1: ' NAME >BODY внутри CODE в target-компиляции резолвится в ХОСТ-адрес
+\ (вне образа, AV). Target-переменные адресуем только disp-именем: HANDLER (%rip).
+\ ВНИМАНИЕ 2 (найдено 25.11.2026): в gasm64.4 (%rip)-mov c РАСШИРЕННЫМ регистром-
+\ приёмником (r8-r15) кодируется с ошибкой: REX получает W+B вместо R+...
+\ фактический приёмник становится %rdx/%rcx. Поэтому в (%rip)-форме используем
+\ только %rax/%rcx/%rdx/%rsi/%rdi (reg<8); r10 и др. - только через c, вручную.
+\ Адрес кода EXC-CB нельзя взять disp-именем или $имя (BAD TEXECUTE: CODE-слово
+\ не исполняется при компиляции). Поэтому он кладётся в EXC-CB-CELL вызовом
+\ EXC-CB-INIT (см. fstart.4) до SET-EXC-HANDLER.
+\ TEB на Win64 адресуется через GS (префикс 0x65): gs:[0x08]=StackBase,
+\ gs:[0x10]=StackLimit. Префикс 0x64 (FS) на x64 неверен.
+\ Регистры VEH: rcx=^EXCEPTION_POINTERS, [rcx]=ExceptionRecord, [rcx+8]=CONTEXT.
+\ CONTEXT(RAX=0x78,RSP=0x98,RBP=0xA0,RIP=0xF8,RCX=0x80). НИТЬ МЕНЯЕТСЯ: rcx/rdx/r11
+\ на входе уже не наши - читаем через них ТОЛЬКО [rcx]/[rcx+8].
+
+VARIABLE EXC-CB-CELL
+
+CODE EXC-CB
+        mov     0x00(%rcx),%rdx
+        mov     0x08(%rcx),%r11
+        mov     0x00(%rdx),%rax
+        shl     $0x20,%rax
+        sar     $0x20,%rax
+        mov     $0xC000013A,%rcx
+        cmp     %rcx,%rax
+        jz      7f
+        mov     HANDLER (%rip),%rdx
+        test    %rdx,%rdx
+        jz      8f
+        $65 c, $48 c, $8b c, $0c c, $25 c, $10 c, 0 c, 0 c, 0 c,
+        cmp     %rdx,%rcx
+        ja      9f
+        $65 c, $48 c, $8b c, $0c c, $25 c, $08 c, 0 c, 0 c, 0 c,
+        cmp     %rcx,%rdx
+        jae     9f
+        mov     0x98(%r11),%rcx
+        cmp     %rdx,%rcx
+        jae     9f
+        mov     0x00(%rdx),%rcx
+        mov     %rcx,HANDLER (%rip)
+        mov     0x08(%rdx),%rcx
+        lea     0x08(%rcx),%rcx
+        mov     %rcx,0xA0(%r11)
+        mov     0x10(%rdx),%rcx
+        mov     %rcx,0xF8(%r11)
+        lea     0x18(%rdx),%rcx
+        mov     %rcx,0x98(%r11)
+        mov     %rax,0x78(%r11)
+        mov     $0x1,%rax
+        neg     %rax
+        ret
+7:      sub     $0x28,%rsp
+        mov     %rax,%rcx
+        call    'ExitProcess (%rip)
+8:      xor     %rax,%rax
+        ret
+9:      xor     %rax,%rax
+        ret
+END-CODE
+
+: EXC-CB-INIT ( -- )
+  ['] EXC-CB EXC-CB-CELL ! ;
+
+CODE SET-EXC-HANDLER ( -- handle )
+\ Установить векторный обработчик исключений на весь процесс.
+\ Старый TOS (RAX) пушится на стек данных, хэндл становится новым TOS.
+        lea     -0x08(%rbp),%rbp
+        mov     %rax,0x00(%rbp)
+        sub     $0x28,%rsp
+        mov     $0x1,%rcx
+        mov     EXC-CB-CELL (%rip),%rdx
+        call    'AddVectoredExceptionHandler (%rip)
+        add     $0x28,%rsp
+        ret
+END-CODE
