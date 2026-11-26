@@ -237,6 +237,8 @@ CREATE TAB_r(r,r)	0 C, 2 C, 1 C, 3 C, 4 C, 6 C, 5 C, 7 C,
 	IF    -333 THROW THEN
 \ MO_TST_VAL-Off
 \ CR ." REX20=" .S KEY DROP
+  #(%rip),%r_x #%r_x,(%rip) OR
+	IF 1 AND 2* 2* THEN
   #%r_x,%r_x
  #%r_x,(%r_x)   OR
  #(%r_x,%r_x)	OR	IF TAB_(r,r)	+ C@ THEN
