@@ -6,19 +6,13 @@
 \   Rip     = [H+16]     точка возврата из THROW
 \   Rsp     = H+24
 \   Rbp     = [H+8]+8    как SP!: стек данных без xt
-\   Rax     = код исключения (знакорасширенный)
+\   Rax     = код исключения (32-битный DWORD без знакового расширения)
 \ и возвращает -1 = EXCEPTION_CONTINUE_EXECUTION (проверено экспериментально).
 \ Кадра нет - 0 = EXCEPTION_CONTINUE_SEARCH (идём дальше по цепочке, к WER).
 \ Ctrl+C (0xC000013A, wine) - ExitProcess, как HALT в SP-Forth.
 \ Кадр на чужом стеке (другая нить) - EXCEPTION_CONTINUE_SEARCH.
 \ ВНИМАНИЕ 1: ' NAME >BODY внутри CODE в target-компиляции резолвится в ХОСТ-адрес
 \ (вне образа, AV). Target-переменные адресуем только disp-именем: HANDLER (%rip).
-\ ВНИМАНИЕ 2 (найдено 25.11.2026, исправлено 26.11.2026): в gasm64.4th (%rip)-mov
-\ c РАСШИРЕННЫМ регистром-приёмником (r8-r15) кодировался с ошибкой: REX получал
-\ W+B вместо W+R, фактический приёмник становился %rdx/%rcx. Исправление в REX,
-\ (gasm64.4th): для rip-форм бит 0 (REX.B) переносится в бит 2 (REX.R), после чего
-\ в (%rip)-формах можно использовать любые регистры, включая r8-r15
-\ (проверено на пересобранном кернеле: 4C 89/03/01/8D 15/1D ...).
 \ Адрес кода EXC-CB нельзя взять disp-именем или $имя (BAD TEXECUTE: CODE-слово
 \ не исполняется при компиляции). Поэтому он кладётся в EXC-CB-CELL вызовом
 \ EXC-CB-INIT (см. fstart.4) до SET-EXC-HANDLER.
@@ -30,12 +24,18 @@
 
 VARIABLE EXC-CB-CELL
 
+\ Фрагмент программирования в кодах (gasm64): тело VEH-обработчика.
+\ Соглашение вызова Win64: rcx=^EXCEPTION_POINTERS; волатильные регистры
+\ rcx/rdx/r11 после вызова не сохраняются, rax - возврат. На стек данных
+\ не опираемся: кадр мог быть выброшен в любой точке программы.
+\ Алгоритм: чтение ExceptionRecord/CONTEXT из [rcx], при Ctrl+C - ExitProcess,
+\ при совпадении HANDLER с кадром на стеке текущей нити - переписывание
+\ CONTEXT в состояние THROW (Rip/Rsp/Rbp/Rax) и возврат -1
+\ (EXCEPTION_CONTINUE_EXECUTION), иначе 0 (EXCEPTION_CONTINUE_SEARCH).
 CODE EXC-CB
         mov     0x00(%rcx),%rdx
         mov     0x08(%rcx),%r11
         mov     0x00(%rdx),%rax
-        shl     $0x20,%rax
-        sar     $0x20,%rax
         mov     $0xC000013A,%rcx
         cmp     %rcx,%rax
         jz      7f
